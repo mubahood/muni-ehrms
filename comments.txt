@@ -1,0 +1,9 @@
+-First the vehicle form data should be the same as the form i have sent.
+-User shouldn’t be able to see all material request,
+-And the PDF also i couldn’t see where to generate the pdf file. Must be able to print pdf after GM approval->
+-The source code if we can clean, the files ( database, views, routes) which are not related to this project for the migrations to sqlsrv.
+***The HOD also should only View request submitted by the users under the same department.*OUT OF SCOPE
+- Security rôle also should only be able to see request after GM approval
+- And the migration also, it’s showing error to migrate the users table
+***- No need thèse information for material requests. Only the request date and time needed
+***- The request Id for all request can we make an références like, REQUEST-001,*out of scope

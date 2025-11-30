@@ -1,0 +1,111 @@
+/* public/css/report.css */
+body {
+    font-family: 'Helvetica', sans-serif;
+    font-size: 10px;
+    color: #333;
+}
+.page-break {
+    page-break-after: always;
+}
+.container {
+    width: 100%;
+}
+
+/* Header */
+.header-table {
+    width: 100%;
+    border-bottom: 2px solid #00BF63;
+    margin-bottom: 20px;
+}
+.header-table .logo {
+    width: 120px;
+}
+.header-table .company-details h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #00BF63;
+    font-weight: bold;
+}
+.header-table .company-details p {
+    margin: 2px 0;
+    font-size: 11px;
+}
+.header-table .report-info {
+    text-align: right;
+}
+
+/* Section Titles */
+h2.section-title {
+    font-size: 16px;
+    color: #333;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+/* Summary KPI Boxes */
+.kpi-container {
+    width: 100%;
+    margin-bottom: 20px;
+}
+.kpi-box {
+    display: inline-block;
+    width: 18%;
+    background-color: #F0FFF7;
+    border: 1px solid #cce8d4;
+    border-radius: 5px;
+    padding: 10px;
+    text-align: center;
+    margin-right: 1%;
+}
+.kpi-box .number {
+    font-size: 22px;
+    font-weight: bold;
+    color: #00BF63;
+    margin: 0;
+}
+.kpi-box .title {
+    font-size: 11px;
+    color: #555;
+    margin: 0;
+}
+
+/* General Table Styling */
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+.report-table th, .report-table td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: left;
+}
+.report-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    font-size: 11px;
+}
+.text-center { text-align: center !important; }
+.text-danger { color: #e74c3c; font-weight: bold; }
+.text-success { color: #28a745; }
+.text-warning { color: #f39c12; font-weight: bold; }
+
+/* Employee Log Table */
+.employee-log-table td.status-Present { background-color: #e6f9f0; }
+.employee-log-table td.status-Absent { background-color: #fdecea; }
+.employee-log-table td.status-Leave { background-color: #fff9e6; }
+.employee-log-table td.status-Missing { background-color: #f4f4f4; }
+
+/* Footer */
+.footer {
+    position: fixed;
+    bottom: -30px;
+    left: 0px;
+    right: 0px;
+    height: 50px;
+    font-size: 9px;
+    text-align: center;
+    color: #888;
+}

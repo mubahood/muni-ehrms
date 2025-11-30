@@ -1,0 +1,221 @@
+:root {
+    --primary-green: #00BF63;
+    --dark-green: #008C4A;
+    --light-green: #E6F9EF;
+    --text-dark: #222b45;
+    --text-muted: #7b8a99;
+    --border-color: #e3e8ee;
+    --bg-white: #fff;
+    --shadow-color: rgba(44, 62, 80, 0.08);
+    --accent-yellow: #F4B400;
+    --accent-red: #EA4335;
+    --accent-blue: #4285F4;
+    --card-radius: 18px;
+    --transition: 0.18s cubic-bezier(.4,0,.2,1);
+}
+
+/* Global Layout */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+    background: var(--light-green);
+    min-height: 100vh;
+}
+
+/* KPI Cards Grid */
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2.2rem;
+    margin-bottom: 3.5rem;
+}
+
+/* Chart and List Grids */
+.charts-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 2.2rem;
+    margin-bottom: 3rem;
+}
+
+/* KPI Card Styling */
+.kpi-card {
+    background: var(--bg-white);
+    border-radius: var(--card-radius);
+    padding: 2.2rem 2rem;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 6px 24px var(--shadow-color);
+    transition: transform var(--transition), box-shadow var(--transition);
+    margin-bottom: 1rem;
+    border: 1.5px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+.kpi-card::before {
+    content: "";
+    position: absolute;
+    right: -40px;
+    top: -40px;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-blue) 100%);
+    opacity: 0.08;
+    border-radius: 50%;
+    z-index: 0;
+}
+.kpi-card:hover {
+    transform: translateY(-8px) scale(1.025);
+    box-shadow: 0 16px 32px var(--shadow-color);
+    border-color: var(--primary-green);
+}
+.kpi-card .icon-container {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--primary-green) 60%, var(--accent-blue) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg-white);
+    font-size: 2rem;
+    margin-right: 1.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    z-index: 1;
+}
+.kpi-card .info {
+    flex: 1;
+    z-index: 1;
+}
+.kpi-card .info h4 {
+    margin: 0;
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+}
+.kpi-card .info .value {
+    display: block;
+    margin-top: .6rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary-green);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 8px rgba(0,191,99,0.08);
+}
+
+/* Modern Box for Charts & Lists */
+.modern-box {
+    background: var(--bg-white);
+    border-radius: var(--card-radius);
+    padding: 2rem 2rem 1.5rem 2rem;
+    box-shadow: 0 6px 24px var(--shadow-color);
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    border: 1.5px solid var(--border-color);
+    transition: box-shadow var(--transition), border-color var(--transition);
+}
+.modern-box:hover {
+    box-shadow: 0 16px 32px var(--shadow-color);
+    border-color: var(--primary-green);
+}
+.modern-box .box-header {
+    font-size: 1.18rem;
+    font-weight: 700;
+    margin-bottom: 1.2rem;
+    color: var(--text-dark);
+    border-bottom: 1.5px solid var(--border-color);
+    padding-bottom: .85rem;
+    letter-spacing: 0.01em;
+}
+.modern-box canvas {
+    flex: 1;
+    max-height: 320px;
+}
+
+/* Employee List Styling */
+.employee-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.employee-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 1.5px solid var(--border-color);
+    transition: background var(--transition), box-shadow var(--transition);
+    border-radius: 8px;
+    position: relative;
+}
+.employee-list li:last-child {
+    border-bottom: none;
+}
+.employee-list li:hover {
+    background: var(--light-green);
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+.employee-list .user-name {
+    font-size: 1.05rem;
+    color: var(--text-dark);
+    flex: 1;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+.employee-list .user-count {
+    font-size: .95rem;
+    font-weight: 700;
+    padding: .45rem 1.2rem;
+    border-radius: 24px;
+    background: var(--primary-green);
+    color: var(--bg-white);
+    margin-left: 1.2rem;
+    min-width: 54px;
+    text-align: center;
+    box-shadow: 0 1px 4px var(--shadow-color);
+    transition: background var(--transition);
+}
+.employee-list .count-danger {
+    background: var(--accent-red);
+}
+.employee-list .count-warning {
+    background: var(--accent-yellow);
+    color: #222;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 900px) {
+    .dashboard-container {
+        padding: 1.2rem 0.5rem;
+    }
+    .kpi-row, .charts-row {
+        gap: 1.2rem;
+    }
+    .modern-box {
+        padding: 1.2rem 1rem 1rem 1rem;
+    }
+}
+@media (max-width: 600px) {
+    .kpi-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1.2rem 1rem;
+    }
+    .kpi-card .icon-container {
+        margin-bottom: .85rem;
+        margin-right: 0;
+    }
+    .modern-box {
+        padding: 1rem 0.7rem 0.7rem 0.7rem;
+    }
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+}

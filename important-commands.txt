@@ -1,0 +1,40 @@
+php artisan make:migration create_landloads_table
+php artisan make:migration create_houses_table
+
+
+activity_name
+->farmer_activity_status
+->activity_date_done
+->farmer_comment
+->photo
+
+
+
+*farmer_has_submitted
+*farmer_submission_date
+agent_id
+agent_names
+agent_has_submitted
+agent_activity_status
+agent_comment
+agent_submission_date
+
+lsphp artisan make:component ImportAttendanceRecord --inline
+
+php artisan migrate
+ 
+php artisan make:migration create_events_table
+
+php artisan make:migration add_late_time_system_configurations --table=system_configurations
+
+
+Encore\Admin\Auth\Database\Administrator::class,
+php artisan admin:make FormSr4Controller --model=App\FormSr4
+php artisan admin:make GeneralReportController --model=App\Models\GeneralReport
+
+
+
+ 
+php artisan make:model ImportAttendanceRecord -m
+php artisan make:model GeneralReport -m
+ 
