@@ -1,0 +1,237 @@
+/*
+ * Skin: Muni University Maroon
+ * Custom skin for Muni University EHRMS
+ * Primary Color: #800000 (Maroon)
+ */
+
+/* skin-muni navbar */
+.skin-muni .main-header .navbar {
+  background-color: #800000;
+}
+
+.skin-muni .main-header .navbar .nav > li > a {
+  color: #ffffff;
+}
+
+.skin-muni .main-header .navbar .nav > li > a:hover,
+.skin-muni .main-header .navbar .nav > li > a:active,
+.skin-muni .main-header .navbar .nav > li > a:focus,
+.skin-muni .main-header .navbar .nav .open > a,
+.skin-muni .main-header .navbar .nav .open > a:hover,
+.skin-muni .main-header .navbar .nav .open > a:focus,
+.skin-muni .main-header .navbar .nav > .active > a {
+  background: rgba(0, 0, 0, 0.1);
+  color: #f6f6f6;
+}
+
+.skin-muni .main-header .navbar .sidebar-toggle {
+  color: #ffffff;
+}
+
+.skin-muni .main-header .navbar .sidebar-toggle:hover {
+  color: #f6f6f6;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.skin-muni .main-header .navbar .sidebar-toggle {
+  color: #fff;
+}
+
+.skin-muni .main-header .navbar .sidebar-toggle:hover {
+  background-color: #600000;
+}
+
+@media (max-width: 767px) {
+  .skin-muni .main-header .navbar .dropdown-menu li.divider {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  .skin-muni .main-header .navbar .dropdown-menu li a {
+    color: #fff;
+  }
+  .skin-muni .main-header .navbar .dropdown-menu li a:hover {
+    background: #600000;
+  }
+}
+
+/* skin-muni logo */
+.skin-muni .main-header .logo {
+  background-color: #800000;
+  color: #ffffff;
+  border-bottom: 0 solid transparent;
+}
+
+.skin-muni .main-header .logo:hover {
+  background-color: #600000;
+}
+
+/* skin-muni sidebar */
+.skin-muni .main-sidebar,
+.skin-muni .left-side {
+  background-color: #222d32;
+}
+
+.skin-muni .user-panel > .info,
+.skin-muni .user-panel > .info > a {
+  color: #fff;
+}
+
+.skin-muni .sidebar-menu > li.header {
+  color: #4b646f;
+  background: #1a2226;
+}
+
+.skin-muni .sidebar-menu > li > a {
+  border-left: 3px solid transparent;
+}
+
+.skin-muni .sidebar-menu > li:hover > a,
+.skin-muni .sidebar-menu > li.active > a,
+.skin-muni .sidebar-menu > li.menu-open > a {
+  color: #ffffff;
+  background: #1e282c;
+}
+
+.skin-muni .sidebar-menu > li.active > a {
+  border-left-color: #800000;
+}
+
+.skin-muni .sidebar-menu > li > .treeview-menu {
+  margin: 0 1px;
+  background: #2c3b41;
+}
+
+.skin-muni .sidebar a {
+  color: #b8c7ce;
+}
+
+.skin-muni .sidebar a:hover {
+  text-decoration: none;
+}
+
+.skin-muni .sidebar-menu .treeview-menu > li > a {
+  color: #8aa4af;
+}
+
+.skin-muni .sidebar-menu .treeview-menu > li.active > a,
+.skin-muni .sidebar-menu .treeview-menu > li > a:hover {
+  color: #ffffff;
+}
+
+.skin-muni .sidebar-form {
+  border-radius: 3px;
+  border: 1px solid #374850;
+  margin: 10px 10px;
+}
+
+.skin-muni .sidebar-form input[type="text"],
+.skin-muni .sidebar-form .btn {
+  box-shadow: none;
+  background-color: #374850;
+  border: 1px solid transparent;
+  height: 35px;
+}
+
+.skin-muni .sidebar-form input[type="text"] {
+  color: #666;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 2px;
+}
+
+.skin-muni .sidebar-form input[type="text"]:focus,
+.skin-muni .sidebar-form input[type="text"]:focus + .input-group-btn .btn {
+  background-color: #fff;
+  color: #666;
+}
+
+.skin-muni .sidebar-form input[type="text"]:focus + .input-group-btn .btn {
+  border-left-color: #fff;
+}
+
+.skin-muni .sidebar-form .btn {
+  color: #999;
+  border-top-left-radius: 0;
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+  border-bottom-left-radius: 0;
+}
+
+/* Buttons and links with maroon color */
+.skin-muni .btn-primary {
+  background-color: #800000;
+  border-color: #600000;
+}
+
+.skin-muni .btn-primary:hover,
+.skin-muni .btn-primary:active,
+.skin-muni .btn-primary.hover {
+  background-color: #600000;
+  border-color: #500000;
+}
+
+.skin-muni a {
+  color: #800000;
+}
+
+.skin-muni a:hover,
+.skin-muni a:active,
+.skin-muni a:focus {
+  color: #600000;
+}
+
+/* Content header */
+.skin-muni .content-header {
+  background: transparent;
+}
+
+/* Pagination */
+.skin-muni .pagination > .active > a,
+.skin-muni .pagination > .active > span,
+.skin-muni .pagination > .active > a:hover,
+.skin-muni .pagination > .active > span:hover,
+.skin-muni .pagination > .active > a:focus,
+.skin-muni .pagination > .active > span:focus {
+  background-color: #800000;
+  border-color: #800000;
+}
+
+/* Small box widget */
+.skin-muni .small-box.bg-maroon {
+  background-color: #800000 !important;
+  color: #fff;
+}
+
+.skin-muni .small-box.bg-maroon .icon {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Info box */
+.skin-muni .info-box-icon.bg-maroon {
+  background-color: #800000;
+}
+
+/* Progress bars */
+.skin-muni .progress-bar-maroon {
+  background-color: #800000;
+}
+
+/* Labels */
+.skin-muni .label-maroon {
+  background-color: #800000;
+}
+
+/* Box primary (maroon) */
+.skin-muni .box.box-primary {
+  border-top-color: #800000;
+}
+
+.skin-muni .box.box-primary > .box-header {
+  color: #fff;
+  background: #800000;
+}
+
+.skin-muni .box.box-primary > .box-header a,
+.skin-muni .box.box-primary > .box-header .btn {
+  color: #fff;
+}

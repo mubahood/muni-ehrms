@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // --- ADD THIS NEW DATASET for "On Time" ---
             {
                 label: 'On Time',
-                backgroundColor: '#00BF63', // Your primary green color
+                backgroundColor: '#800000', // Muni University maroon color
                 data: @json($on_time_data)
             },
             // --- Existing datasets ---

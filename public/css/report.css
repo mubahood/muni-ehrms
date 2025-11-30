@@ -14,7 +14,7 @@ body {
 /* Header */
 .header-table {
     width: 100%;
-    border-bottom: 2px solid #00BF63;
+    border-bottom: 2px solid #800000;
     margin-bottom: 20px;
 }
 .header-table .logo {
@@ -23,7 +23,7 @@ body {
 .header-table .company-details h1 {
     margin: 0;
     font-size: 24px;
-    color: #00BF63;
+    color: #800000;
     font-weight: bold;
 }
 .header-table .company-details p {
@@ -52,8 +52,8 @@ h2.section-title {
 .kpi-box {
     display: inline-block;
     width: 18%;
-    background-color: #F0FFF7;
-    border: 1px solid #cce8d4;
+    background-color: #FFF0F0;
+    border: 1px solid #d4b3b3;
     border-radius: 5px;
     padding: 10px;
     text-align: center;
@@ -62,7 +62,7 @@ h2.section-title {
 .kpi-box .number {
     font-size: 22px;
     font-weight: bold;
-    color: #00BF63;
+    color: #800000;
     margin: 0;
 }
 .kpi-box .title {

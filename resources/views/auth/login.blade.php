@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Faras Attendance Portal</title>
+    <title>Login | Muni University EHRMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         :root {
-            --primary-green: #00BF63;
-            --dark-green: #00994f;
+            --primary-maroon: #800000;
+            --dark-maroon: #600000;
             --light-gray: #f4f7f6;
             --text-dark: #222b45;
             --text-light: #7b8a99;
@@ -17,7 +17,7 @@
             --error-red: #e74c3c;
             --white: #fff;
             --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-            --gradient: linear-gradient(135deg, #00BF63 0%, #00994f 100%);
+            --gradient: linear-gradient(135deg, #800000 0%, #600000 100%);
         }
 
         * {
@@ -67,7 +67,7 @@
             position: absolute;
             top: -60px; left: -60px;
             width: 180px; height: 180px;
-            background: radial-gradient(circle, #00BF6340 60%, transparent 100%);
+            background: radial-gradient(circle, #80000040 60%, transparent 100%);
             z-index: 0;
         }
 
@@ -85,7 +85,7 @@
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 1px;
-            color: var(--primary-green);
+            color: var(--primary-maroon);
         }
 
         .login-title p {
@@ -114,8 +114,8 @@
 
         .form-control:focus {
             outline: none;
-            border-color: var(--primary-green);
-            box-shadow: 0 0 0 3px rgba(0, 191, 99, 0.13);
+            border-color: var(--primary-maroon);
+            box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.13);
             background: #fff;
         }
 
@@ -131,7 +131,7 @@
         }
 
         .form-control:focus + .form-control-feedback {
-            color: var(--primary-green);
+            color: var(--primary-maroon);
         }
 
         .btn-submit {
@@ -144,14 +144,14 @@
             font-size: 17px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,191,99,0.08);
+            box-shadow: 0 2px 8px rgba(128,0,0,0.08);
             transition: background 0.3s, transform 0.2s, box-shadow 0.2s;
             letter-spacing: 0.5px;
         }
 
         .btn-submit:hover, .btn-submit:focus {
-            background: linear-gradient(135deg, #00994f 0%, #00BF63 100%);
-            box-shadow: 0 4px 16px rgba(0,191,99,0.13);
+            background: linear-gradient(135deg, #600000 0%, #800000 100%);
+            box-shadow: 0 4px 16px rgba(128,0,0,0.13);
             transform: translateY(-2px) scale(1.01);
         }
 
@@ -180,13 +180,13 @@
             text-align: center;
             margin-top: 32px;
             font-size: 15px;
-            color: var(--primary-green);
+            color: var(--primary-maroon);
             letter-spacing: 0.3px;
             font-weight: 600;
             background: #f8fafb;
             border-radius: 10px;
             padding: 12px 0;
-            box-shadow: 0 2px 8px rgba(0,191,99,0.06);
+            box-shadow: 0 2px 8px rgba(128,0,0,0.06);
         }
 
         @media (max-width: 600px) {
@@ -207,11 +207,11 @@
                 @php
                     $logo = url('assets/images/logo.jpg'); 
                 @endphp
-                <img src="{{ $logo }}" alt="Faras Uganda Logo">
+                <img src="{{ $logo }}" alt="Muni University Logo">
             </div>
             <div class="login-title">
-                <h2>Attendance Portal</h2>
-                <p>Welcome back! Please sign in to continue</p>
+                <h2>EHRMS Portal</h2>
+                <p>Welcome to Muni University EHRMS</p>
             </div>
 
             <form action="{{ url('auth/login') }}" method="post" autocomplete="off">
@@ -263,7 +263,7 @@
             </form>
         </div>
         <div class="login-footer">
-            &copy; {{ date('Y') }} Faras Uganda. All Rights Reserved.
+            &copy; {{ date('Y') }} Muni University. All Rights Reserved.
         </div>
     </div>
 </body>
