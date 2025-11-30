@@ -1,23 +1,36 @@
 \documentclass[12pt]{article}
 \usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage{enumitem}
-\usepackage{fontspec}
 \usepackage{hyperref}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
 \usepackage{xcolor}
 \usepackage{subcaption}
 \usepackage{float}
-
-% Set modern, professional font
-\setmainfont{Calibri}[Path=/System/Library/Fonts/, Extension=.ttc, UprightFont=*]
-\setsansfont{Arial}[Path=/System/Library/Fonts/, Extension=.ttf, UprightFont=*]
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{textcomp}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{setspace}
+\usepackage{titlesec}
 
 % Define university color (minimal use)
 \definecolor{munimaroon}{RGB}{128,0,0}
+
+% Format section titles with maroon color
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{munimaroon}}
+  {\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{munimaroon}}
+  {\thesubsection}{1em}{}
 
 % Header and footer configuration
 \pagestyle{fancy}
@@ -50,19 +63,19 @@
     
     \vspace{1.5cm}
     
-    {\Huge \textbf{ELECTRONIC HUMAN RESOURCE}} \\
+    {\Huge \textbf{\color{munimaroon}ELECTRONIC HUMAN RESOURCE}} \\
     \vspace{0.3cm}
-    {\Huge \textbf{MANAGEMENT SYSTEM}} \\
+    {\Huge \textbf{\color{munimaroon}MANAGEMENT SYSTEM}} \\
     \vspace{0.5cm}
     {\LARGE \textbf{(EHRMS)}} \\
     
     \vspace{1cm}
-    \rule{0.8\textwidth}{1pt}
+    {\color{munimaroon}\rule{0.8\textwidth}{1pt}}
     \vspace{0.5cm}
     
     {\Large \textbf{Development Proposal}} \\
     \vspace{0.3cm}
-    {\large Mountains of the Moon University}
+    {\large \color{munimaroon}Mountains of the Moon University}
     
     \vfill
     

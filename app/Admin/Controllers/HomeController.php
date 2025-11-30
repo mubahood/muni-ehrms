@@ -22,12 +22,12 @@ class HomeController extends Controller
 
         $user = Admin::user();
         $config = SystemConfiguration::first(); // <-- GET SYSTEM CONFIG
-        $companyName = $config->company_name ?? 'Your Company';
+        $companyName = env('APP_NAME', 'Muni University EHRMS');
         $TIME_NOW = Carbon::now()->format('H:i:s'); // <-- CURRENT TIME
 
         $content
             ->title('TIME: ' . $TIME_NOW)
-            ->description("Welcome to the {$companyName} Attendance Portal.");
+            ->description("Welcome to {$companyName}");
 
         // --- Date variables ---
         $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();

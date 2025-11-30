@@ -3,10 +3,10 @@ use App\Models\Utils;
 
 ?>
 <!-- Main Header -->
-<header class="main-header" style="background-color: #222D33!important;">
+<header class="main-header" style="background-color: #800000!important;">
 
     <!-- Logo -->
-    <a href="{{ admin_url('/') }}" class="logo"  style="background-color: #189A47!important;">
+    <a href="{{ admin_url('/') }}" class="logo"  style="background-color: #600000!important;">
         <!-- mini logo for sidebar mini 50x50 pixels -->
         {{-- <span class="logo-mini">{!! env('SHORT_NAME') !!}</span> --}}
         <img class="logo-mini" src="{{ url('public/assets/images/logo.jpg') }}" alt="Logo">
@@ -17,7 +17,7 @@ use App\Models\Utils;
     </a>
 
     <!-- Header Navbar -->
-    <nav class="navbar navbar-static-top d-block p-0" role="navigation" style="background-color: #189A47!important;">
+    <nav class="navbar navbar-static-top d-block p-0" role="navigation" style="background-color: #800000!important;">
         <!-- Sidebar toggle button-->
         <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
             <span class="sr-only">Toggle navigation</span>

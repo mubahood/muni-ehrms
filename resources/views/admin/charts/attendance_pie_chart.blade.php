@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
             labels: @json($labels),
             datasets: [{
                 data: @json($data),
-                backgroundColor: ['#00BF63', '#e74c3c', '#f39c12'],
+                backgroundColor: ['#800000', '#e74c3c', '#f39c12'],
                 borderColor: '#ffffff',
                 borderWidth: 4
             }]

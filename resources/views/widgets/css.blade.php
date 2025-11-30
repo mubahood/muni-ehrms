@@ -1,7 +1,4 @@
-<?php
-use App\Models\Utils;
-$ent = Utils::ent();
-?><style>
+<style>
     .sidebar {
         background-color: #FFFFFF;
     }
@@ -11,8 +8,8 @@ $ent = Utils::ent();
     }
 
     .sidebar-menu .active {
-        border-left: solid 5px {{ $ent->color }} !important;
-        color: {{ $ent->color }} !important;
+        border-left: solid 5px #800000 !important;
+        color: #800000 !important;
     }
 
 
@@ -25,7 +22,7 @@ $ent = Utils::ent();
     .btn-instagram,
     .btn-primary,
     .navbar-static-top {
-        background-color: {{ $ent->color }} !important;
+        background-color: #800000 !important;
     }
 
     .dropdown-menu {
@@ -33,10 +30,10 @@ $ent = Utils::ent();
     }
 
     .box-success {
-        border-top: {{ $ent->color }} .5rem solid !important;
+        border-top: #800000 .5rem solid !important;
     }
 
     :root {
-        --primary: {{ $ent->color }};
+        --primary: #800000;
     }
 </style>
