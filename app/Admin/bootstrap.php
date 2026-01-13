@@ -38,9 +38,10 @@ $max = 300;
 $user_ids = User::all()->pluck('id')->toArray();
 $faker = Faker\Factory::create();
 $vehicles_ids = Vehicle::all()->pluck('id')->toArray();
-// Inject our custom CSS file into the header
-Admin::css(asset('css/custom-dashboard.css'));
 
+// Inject our custom CSS files into the header
+Admin::css(asset('css/muni-ehrms.css'));      // Master stylesheet
+Admin::css(asset('css/custom-dashboard.css')); // Dashboard specific
 
 Admin::css(url('/assets/css/bootstrap.css'));
 Admin::css('/assets/css/styles.css');

@@ -1,221 +1,281 @@
-:root {
-    --primary-maroon: #800000;
-    --dark-maroon: #600000;
-    --light-maroon: #FFF0F0;
-    --text-dark: #222b45;
-    --text-muted: #7b8a99;
-    --border-color: #e3e8ee;
-    --bg-white: #fff;
-    --shadow-color: rgba(44, 62, 80, 0.08);
-    --accent-yellow: #F4B400;
-    --accent-red: #EA4335;
-    --accent-blue: #4285F4;
-    --card-radius: 18px;
-    --transition: 0.18s cubic-bezier(.4,0,.2,1);
+/**
+ * ============================================================================
+ * MUNI UNIVERSITY EHRMS - DASHBOARD SPECIFIC STYLES
+ * ============================================================================
+ * Dashboard-specific styles that complement the master stylesheet.
+ * This file handles dashboard layout and grid systems.
+ * Version: 2.0
+ * ============================================================================
+ */
+
+/* ==========================================================================
+   ROW LAYOUTS - DASHBOARD GRID
+   ========================================================================== */
+
+/* Override AdminLTE's default row margins for better spacing */
+.content .row {
+    margin-left: -10px;
+    margin-right: -10px;
 }
 
-/* Global Layout */
-.dashboard-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem;
-    background: var(--light-maroon);
-    min-height: 100vh;
+.content .row > [class*="col-"] {
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
-/* KPI Cards Grid */
-.kpi-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 2.2rem;
-    margin-bottom: 3.5rem;
+/* First row: KPI Cards - need equal heights */
+.content .row:first-child {
+    margin-bottom: 20px;
 }
 
-/* Chart and List Grids */
-.charts-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 2.2rem;
-    margin-bottom: 3rem;
+/* ==========================================================================
+   KPI CARDS ROW - RESPONSIVE GRID
+   ========================================================================== */
+
+/* Ensure KPI cards have consistent height */
+.content .row .col-md-3 .kpi-card,
+.content .row .col-sm-6 .kpi-card {
+    min-height: 100px;
+    height: 100%;
 }
 
-/* KPI Card Styling */
-.kpi-card {
-    background: var(--bg-white);
-    border-radius: var(--card-radius);
-    padding: 2.2rem 2rem;
-    min-height: 150px;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 6px 24px var(--shadow-color);
-    transition: transform var(--transition), box-shadow var(--transition);
-    margin-bottom: 1rem;
-    border: 1.5px solid var(--border-color);
-    position: relative;
-    overflow: hidden;
+/* ==========================================================================
+   CHART BOXES - EQUAL HEIGHT
+   ========================================================================== */
+
+/* Charts row - ensure both charts have same height */
+.content .row .col-md-6 .modern-box {
+    height: 100%;
+    min-height: 360px;
 }
-.kpi-card::before {
-    content: "";
-    position: absolute;
-    right: -40px;
-    top: -40px;
-    width: 120px;
-    height: 120px;
-    background: linear-gradient(135deg, var(--primary-maroon) 0%, var(--dark-maroon) 100%);
-    opacity: 0.08;
-    border-radius: 50%;
-    z-index: 0;
-}
-.kpi-card:hover {
-    transform: translateY(-8px) scale(1.025);
-    box-shadow: 0 16px 32px var(--shadow-color);
-    border-color: var(--primary-maroon);
-}
-.kpi-card .icon-container {
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, var(--primary-maroon) 60%, var(--dark-maroon) 100%);
+
+/* Chart content area */
+.modern-box .box-content {
+    height: calc(100% - 50px);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--bg-white);
-    font-size: 2rem;
-    margin-right: 1.5rem;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px var(--shadow-color);
-    z-index: 1;
-}
-.kpi-card .info {
-    flex: 1;
-    z-index: 1;
-}
-.kpi-card .info h4 {
-    margin: 0;
-    font-size: 1.18rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    letter-spacing: 0.01em;
-    line-height: 1.2;
-}
-.kpi-card .info .value {
-    display: block;
-    margin-top: .6rem;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--primary-maroon);
-    line-height: 1;
-    letter-spacing: -0.02em;
-    text-shadow: 0 2px 8px rgba(128,0,0,0.08);
 }
 
-/* Modern Box for Charts & Lists */
-.modern-box {
-    background: var(--bg-white);
-    border-radius: var(--card-radius);
-    padding: 2rem 2rem 1.5rem 2rem;
-    box-shadow: 0 6px 24px var(--shadow-color);
-    margin-bottom: 2rem;
-    display: flex;
-    flex-direction: column;
-    border: 1.5px solid var(--border-color);
-    transition: box-shadow var(--transition), border-color var(--transition);
-}
-.modern-box:hover {
-    box-shadow: 0 16px 32px var(--shadow-color);
-    border-color: var(--primary-maroon);
-}
-.modern-box .box-header {
-    font-size: 1.18rem;
-    font-weight: 700;
-    margin-bottom: 1.2rem;
-    color: var(--text-dark);
-    border-bottom: 1.5px solid var(--border-color);
-    padding-bottom: .85rem;
-    letter-spacing: 0.01em;
-}
-.modern-box canvas {
-    flex: 1;
-    max-height: 320px;
+.modern-box .box-content canvas {
+    max-width: 100%;
 }
 
-/* Employee List Styling */
+/* ==========================================================================
+   EMPLOYEE LISTS - EQUAL HEIGHT
+   ========================================================================== */
+
+/* Lists row - ensure both lists have same height */
+.content .row .col-md-6 .modern-box:last-child,
+.box.box-info {
+    min-height: 300px;
+}
+
+/* Employee list scrollable if too many items */
 .employee-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-.employee-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.1rem 0;
-    border-bottom: 1.5px solid var(--border-color);
-    transition: background var(--transition), box-shadow var(--transition);
-    border-radius: 8px;
-    position: relative;
-}
-.employee-list li:last-child {
-    border-bottom: none;
-}
-.employee-list li:hover {
-    background: var(--light-maroon);
-    box-shadow: 0 2px 8px var(--shadow-color);
-}
-.employee-list .user-name {
-    font-size: 1.05rem;
-    color: var(--text-dark);
-    flex: 1;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-}
-.employee-list .user-count {
-    font-size: .95rem;
-    font-weight: 700;
-    padding: .45rem 1.2rem;
-    border-radius: 24px;
-    background: var(--primary-maroon);
-    color: var(--bg-white);
-    margin-left: 1.2rem;
-    min-width: 54px;
-    text-align: center;
-    box-shadow: 0 1px 4px var(--shadow-color);
-    transition: background var(--transition);
-}
-.employee-list .count-danger {
-    background: var(--accent-red);
-}
-.employee-list .count-warning {
-    background: var(--accent-yellow);
-    color: #222;
+    max-height: 250px;
+    overflow-y: auto;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 900px) {
-    .dashboard-container {
-        padding: 1.2rem 0.5rem;
-    }
-    .kpi-row, .charts-row {
-        gap: 1.2rem;
-    }
-    .modern-box {
-        padding: 1.2rem 1rem 1rem 1rem;
+/* Custom scrollbar for employee list */
+.employee-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.employee-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.employee-list::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 2px;
+}
+
+.employee-list::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+
+/* Large screens - 4 KPI cards in a row */
+@media (min-width: 1200px) {
+    .content .row .col-md-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
     }
 }
-@media (max-width: 600px) {
-    .kpi-card {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 1.2rem 1rem;
+
+/* Medium screens - 2 KPI cards per row */
+@media (max-width: 991px) {
+    .content .row .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        margin-bottom: 10px;
     }
-    .kpi-card .icon-container {
-        margin-bottom: .85rem;
-        margin-right: 0;
+    
+    .content .row .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 15px;
     }
+    
     .modern-box {
-        padding: 1rem 0.7rem 0.7rem 0.7rem;
+        min-height: auto !important;
     }
-    .charts-row {
-        grid-template-columns: 1fr;
+}
+
+/* Small screens - 1 KPI card per row */
+@media (max-width: 576px) {
+    .content .row .col-md-3,
+    .content .row .col-sm-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .kpi-card {
+        padding: 15px;
+    }
+    
+    .kpi-card .icon-container {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+    }
+    
+    .kpi-card .info-container h3 {
+        font-size: 24px;
+    }
+    
+    .kpi-card .info-container p {
+        font-size: 11px;
+    }
+}
+
+/* ==========================================================================
+   ANIMATION ENHANCEMENTS
+   ========================================================================== */
+
+/* Staggered fade-in animation for dashboard elements */
+.fade-in:nth-child(1) { animation-delay: 0ms; }
+.fade-in:nth-child(2) { animation-delay: 50ms; }
+.fade-in:nth-child(3) { animation-delay: 100ms; }
+.fade-in:nth-child(4) { animation-delay: 150ms; }
+.fade-in:nth-child(5) { animation-delay: 200ms; }
+.fade-in:nth-child(6) { animation-delay: 250ms; }
+
+/* ==========================================================================
+   SPECIAL DASHBOARD ELEMENTS
+   ========================================================================== */
+
+/* Time display in header */
+.content-header > h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.content-header > h1::before {
+    content: '';
+    width: 4px;
+    height: 28px;
+    background: linear-gradient(180deg, #800000 0%, #600000 100%);
+    border-radius: 2px;
+    display: inline-block;
+}
+
+/* Separator line after KPI cards */
+.content .row:first-child::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
+    margin: 10px 0;
+}
+
+/* ==========================================================================
+   DASHBOARD LOADING STATE
+   ========================================================================== */
+
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ==========================================================================
+   CHART COLOR OVERRIDES
+   ========================================================================== */
+
+/* Ensure chart legends are properly styled */
+.modern-box .chartjs-legend {
+    margin-top: 15px;
+}
+
+.modern-box .chartjs-legend li {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 15px;
+    font-size: 12px;
+    color: #4a5568;
+}
+
+.modern-box .chartjs-legend li span {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 6px;
+}
+
+/* ==========================================================================
+   EMPTY STATE STYLING
+   ========================================================================== */
+
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: #718096;
+}
+
+.empty-state i {
+    font-size: 48px;
+    color: #cbd5e0;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.empty-state p {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* ==========================================================================
+   PRINT OPTIMIZATIONS
+   ========================================================================== */
+
+@media print {
+    .kpi-card,
+    .modern-box {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .content .row {
+        display: block;
+    }
+    
+    .content .row > [class*="col-"] {
+        width: 50% !important;
+        float: left;
+        page-break-inside: avoid;
     }
 }

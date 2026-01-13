@@ -29,5 +29,9 @@ Route::group([
     $router->resource('system-configurations', SystemConfigurationController::class);
     $router->resource('leaves', LeaveController::class);
     $router->resource('attendance-records', AttendanceRecordController::class);
-    $router->resource('general-reports', GeneralReportController::class); 
+    $router->resource('general-reports', GeneralReportController::class);
+    
+    // Hikvision Event Logs
+    $router->resource('event-logs', EventLogController::class);
+    $router->get('event-logs-dashboard', 'EventLogController@dashboard')->name('event-logs.dashboard');
 });
