@@ -26,6 +26,7 @@ use App\Admin\Extensions\Nav\Shortcut;
 use App\Admin\Extensions\Nav\Dropdown;
 use App\Models\AdminRoleUser;
 use App\Models\AttendanceRecord;
+use App\Models\Department;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleRequest;
@@ -53,3 +54,13 @@ $attendanceRecord = AttendanceRecord::whereDate('created_at', $today)
 if (!$attendanceRecord) { 
 }
 Utils::generate_attendance_records();
+
+// Extend the user form to include department assignment
+Admin::booting(function () {
+    Form::composing('admin.auth.users', function ($form) {
+        $form->select('department_id', 'Department')
+            ->options(Department::where('is_active', true)
+                ->pluck('name', 'id'))
+            ->help('Assign this user to a department');
+    });
+});

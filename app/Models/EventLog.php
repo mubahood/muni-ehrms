@@ -278,8 +278,9 @@ class EventLog extends Model
             return false;
         }
 
-        // Try to find user by employee number
-        $user = User::where('id', $this->employee_no)
+        // Try to find user by employee number (new column), then fallback to id or username
+        $user = User::where('employee_no', $this->employee_no)
+            ->orWhere('id', $this->employee_no)
             ->orWhere('username', $this->employee_no)
             ->first();
 

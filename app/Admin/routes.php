@@ -13,7 +13,9 @@ Route::group([
 
     $router->get('/', 'HomeController@index')->name('home');
     $router->get('/calendar', 'HomeController@calendar')->name('calendar');
+    $router->resource('users', UsersController::class);
     $router->resource('departmets', DepartmetController::class);
+    $router->resource('departments', DepartmentController::class);
     $router->resource('vehicles', VehicleController::class);
     $router->resource('vehicle-requests', VehicleRequestController::class);
     $router->resource('materials-requests', VehicleRequestController::class);

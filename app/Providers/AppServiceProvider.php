@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\EventLog;
+use App\Observers\EventLogObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        // Register EventLog observer for automatic attendance processing
+        EventLog::observe(EventLogObserver::class);
     }
 }

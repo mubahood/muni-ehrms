@@ -24,7 +24,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Run end-of-day attendance evaluation at 11:59 PM daily
+        $schedule->command('attendance:evaluate-eod')
+            ->dailyAt('23:59')
+            ->timezone('Africa/Kampala');
+
+        // Process any unprocessed events every 5 minutes
+        $schedule->command('attendance:process-events --limit=500')
+            ->everyFiveMinutes();
     }
 
     /**

@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\EventLogController;
+use App\Http\Controllers\GeneralReportPrintController;
 use App\Http\Controllers\MainController;
+use App\Http\Controllers\ReportGenerationController;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Models\AttendanceRecord;
@@ -25,6 +28,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Sabberworm\CSS\Property\Import;
 
+// Event Log Processing Routes
+Route::get('process-event-logs', [EventLogController::class, 'processEventLogs']);
+Route::get('event-logs/statistics', [EventLogController::class, 'statistics']);
+Route::get('event-logs/process-page', [EventLogController::class, 'processPage']);
+
+// Report Generation API Routes
+Route::prefix('api/reports')->group(function () {
+    Route::post('generate', [ReportGenerationController::class, 'generateGeneralReport']);
+    Route::get('download/{id}', [ReportGenerationController::class, 'downloadReport']);
+    Route::get('statistics/{id}', [ReportGenerationController::class, 'getStatistics']);
+    Route::post('regenerate/{id}', [ReportGenerationController::class, 'regenerateReport']);
+});
 
 Route::get('import-employees', function (Request $r) {
 
@@ -471,103 +486,10 @@ Route::get('download-user-form-data', function (Request $request) {
     $writer->save($filePath);
     return response()->download($filePath)->deleteFileAfterSend(true);
 });
-Route::get('print-general-reports', function (Request $request) {
-    if (!$request->has('id')) {
-        return "Error: Report ID is missing.";
-    }
 
-    $report = GeneralReport::findOrFail($request->id);
-
-    // --- Start Data Processing ---
-    $config = SystemConfiguration::first();
-    $startDate = Carbon::parse($report->start_date);
-    $endDate = Carbon::parse($report->end_date);
-    $users = User::where('status', 'Active')->get();
-
-    // 1. Executive Summary KPIs
-    $totalPresentDays = AttendanceRecord::whereBetween('attendance_date', [$startDate, $endDate])
-        ->where('status', 'Present')->count();
-    $totalAbsentDays = AttendanceRecord::whereBetween('attendance_date', [$startDate, $endDate])
-        ->where('status', 'Absent')->count();
-    $totalLateIncidents = AttendanceRecord::whereBetween('attendance_date', [$startDate, $endDate])
-        ->where('is_late', 'Yes')->count();
-    $totalHoursWorked = AttendanceRecord::whereBetween('attendance_date', [$startDate, $endDate])
-        ->where('status', 'Present')->sum('hours');
-    $totalLeaveDays = Leave::where('start_date', '<=', $endDate)
-        ->where('end_date', '>=', $startDate)->count();
-
-    // 2. Trend Analysis by Day of Week
-    $dayOfWeekData = AttendanceRecord::whereBetween('attendance_date', [$startDate, $endDate])
-        ->select(
-            'day',
-            DB::raw("SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as absent_count"),
-            DB::raw("SUM(CASE WHEN is_late = 'Yes' THEN 1 ELSE 0 END) as late_count")
-        )
-        ->groupBy('day')
-        ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')")
-        ->get();
-
-    // 3. Detailed Employee Records
-    $employeeReports = [];
-    foreach ($users as $user) {
-        $records = AttendanceRecord::where('user_id', $user->id)
-            ->whereBetween('attendance_date', [$startDate, $endDate])
-            ->get()->keyBy('attendance_date');
-
-        $userSummary = [
-            'name' => $user->name,
-            'id' => $user->id,
-            'present' => $records->where('status', 'Present')->count(),
-            'absent' => $records->where('status', 'Absent')->count(),
-            'late' => $records->where('is_late', 'Yes')->count(),
-            'hours' => round($records->where('status', 'Present')->sum('hours'), 2),
-            'log' => []
-        ];
-
-        $period = new \DatePeriod(
-            new \DateTime($startDate->toDateString()),
-            new \DateInterval('P1D'),
-            new \DateTime($endDate->copy()->addDay()->toDateString())
-        );
-
-        foreach ($period as $date) {
-            $currentDateStr = $date->format('Y-m-d');
-            $dayName = $date->format('l');
-            $record = $records->get($currentDateStr);
-
-            $userSummary['log'][$currentDateStr] = [
-                'day' => $dayName,
-                'status' => $record->status ?? ($user->isAvailableOnDay($currentDateStr) ? 'Missing' : 'Off Day'),
-                'check_in' => $record->check_in_time ?? '-',
-                'check_out' => $record->check_out_time ?? '-',
-                'hours' => $record->hours ?? '-',
-                'is_late' => $record->is_late ?? 'No',
-            ];
-        }
-
-        $employeeReports[] = $userSummary;
-    }
-
-    $data = [
-        'report' => $report,
-        'config' => $config,
-        'summary' => [
-            'present' => $totalPresentDays,
-            'absent' => $totalAbsentDays,
-            'late' => $totalLateIncidents,
-            'hours' => round($totalHoursWorked, 2),
-            'leave' => $totalLeaveDays
-        ],
-        'dayOfWeekTrends' => $dayOfWeekData,
-        'employeeReports' => $employeeReports,
-    ];
-
-    $pdf = App::make('dompdf.wrapper');
-    $pdf->setPaper('a4', 'landscape');
-    $pdf->loadHTML(view('reports.general-attendance', $data));
-
-    return $pdf->stream('General-Attendance-Report-' . $report->id . '.pdf');
-});
+// General Reports Routes - Using Dedicated Controller
+Route::get('print-general-reports', [GeneralReportPrintController::class, 'generate'])->name('general-reports.generate');
+Route::get('print-general-reports/print', [GeneralReportPrintController::class, 'view'])->name('general-reports.view');
 
 Route::get('send-new-password', function (Request $r) {
     //send new password to user

@@ -220,7 +220,9 @@ class EventLogController extends AdminController
 
         $grid->tools(function ($tools) {
             // Add process unprocessed button
-            $tools->append('<a href="' . url('process-event-logs') . '" class="btn btn-sm btn-warning" style="margin-right: 5px;">
+            $tools->append('<a
+            target="_blank"
+            href="' . url('process-event-logs') . '" class="btn btn-sm btn-warning" style="margin-right: 5px;">
                 <i class="fa fa-cog"></i> Process Unprocessed
             </a>');
 
@@ -228,7 +230,7 @@ class EventLogController extends AdminController
             $unprocessed = EventLog::unprocessed()->count();
             $processed = EventLog::processed()->count();
             $failed = EventLog::failed()->count();
-            
+
             $tools->append("
                 <span class='label label-warning' style='margin-right: 5px;'>Unprocessed: {$unprocessed}</span>
                 <span class='label label-success' style='margin-right: 5px;'>Processed: {$processed}</span>
@@ -322,9 +324,9 @@ class EventLogController extends AdminController
         $show->divider('Raw Data');
         $show->field('raw_data', __('Raw JSON'))->unescape()->as(function ($data) {
             if (!$data) return 'N/A';
-            return '<pre style="max-height: 400px; overflow: auto;">' . 
-                   json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . 
-                   '</pre>';
+            return '<pre style="max-height: 400px; overflow: auto;">' .
+                json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) .
+                '</pre>';
         });
 
         // Picture

@@ -18,7 +18,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class User extends Administrator implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
-    protected $table = 'admin_users';
+    protected $table = 'users';
 
     use HasFactory;
     use Notifiable;
@@ -213,5 +213,29 @@ class User extends Administrator implements JWTSubject
     public function attendanceRecords()
     {
         return $this->hasMany(AttendanceRecord::class, 'user_id');
-    } 
+    }
+
+    /**
+     * Get the department this user belongs to.
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    /**
+     * Get general reports created by this user.
+     */
+    public function generalReports()
+    {
+        return $this->hasMany(GeneralReport::class, 'user_id');
+    }
+
+    /**
+     * Get reports targeted specifically for this user.
+     */
+    public function targetedReports()
+    {
+        return $this->hasMany(GeneralReport::class, 'target_user_id');
+    }
 }
