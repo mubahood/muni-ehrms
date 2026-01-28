@@ -48,6 +48,28 @@ class HikvisionWebhookController extends Controller
             ], 401);
         }
 
+        // Handle webhook test requests (no event data provided)
+        if (!$request->has('event_serial_no') || !$request->has('device_serial')) {
+            Log::info('Hikvision webhook test received', [
+                'ip' => $request->ip(),
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook endpoint is active',
+                'test_mode' => true,
+                'timestamp' => now()->toIso8601String(),
+                'expected_format' => [
+                    'event_serial_no' => 'string (required)',
+                    'device_serial' => 'string (required)',
+                    'event_time' => 'datetime (required)',
+                    'employee_no' => 'string (optional)',
+                    'major' => 'integer (optional)',
+                    'minor' => 'integer (optional)',
+                ],
+            ], 200);
+        }
+
         // Validate event data
         $validator = Validator::make($request->all(), [
             'event_serial_no' => 'required|string',
@@ -126,6 +148,34 @@ class HikvisionWebhookController extends Controller
                 'success' => false,
                 'message' => 'Unauthorized',
             ], 401);
+        }
+
+        // Handle webhook test requests (no events provided)
+        if (!$request->has('events') || empty($request->input('events'))) {
+            Log::info('Hikvision webhook test received', [
+                'ip' => $request->ip(),
+                'test_data' => $request->all(),
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Batch webhook endpoint is active',
+                'test_mode' => true,
+                'timestamp' => now()->toIso8601String(),
+                'expected_format' => [
+                    'events' => [
+                        [
+                            'event_serial_no' => 'string (required)',
+                            'device_serial' => 'string (required)',
+                            'event_time' => 'datetime (required)',
+                            'employee_no' => 'string (optional)',
+                            'major' => 'integer (optional)',
+                            'minor' => 'integer (optional)',
+                        ]
+                    ],
+                    'batch_id' => 'string (optional)',
+                ],
+            ], 200);
         }
 
         // Validate batch data

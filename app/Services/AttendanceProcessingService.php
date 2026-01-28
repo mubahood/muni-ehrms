@@ -142,9 +142,34 @@ class AttendanceProcessingService
      */
     protected function isAttendanceEvent(EventLog $eventLog): bool
     {
-        // Major event type 5 = Access Control, Minor types 75/76/77 = Access Granted
-        return $eventLog->major_event_type == 5 && 
-               in_array($eventLog->minor_event_type, [75, 76, 77]);
+        // Check if event_type explicitly indicates access control
+        $validEventTypes = [
+            'AccessControllerEvent',
+            'Access Event',
+        ];
+        
+        if (in_array($eventLog->event_type, $validEventTypes)) {
+            return true;
+        }
+        
+        // Major event type 5 = Access Control
+        if ($eventLog->major != 5) {
+            return false;
+        }
+        
+        // Access Granted minor types: 75, 76, 77
+        // OR Multi-mode verification which indicates successful access
+        $validMinorTypes = in_array($eventLog->minor, [75, 76, 77]);
+        $validVerifyMode = in_array($eventLog->verify_mode, [
+            'faceOrFpOrCardOrPw',
+            'face',
+            'card',
+            'fingerprint',
+            'password'
+        ]);
+        
+        // Accept if either valid minor type OR valid verify mode (for access control events)
+        return $validMinorTypes || $validVerifyMode;
     }
 
     /**

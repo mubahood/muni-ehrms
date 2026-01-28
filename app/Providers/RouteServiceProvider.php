@@ -57,6 +57,10 @@ class RouteServiceProvider extends ServiceProvider
     protected function configureRateLimiting()
     {
         RateLimiter::for('api', function (Request $request) {
+            // Exclude webhook routes from rate limiting
+            if (str_starts_with($request->path(), 'api/webhook/')) {
+                return Limit::none();
+            }
             return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
         });
     }

@@ -100,20 +100,22 @@ class EventLogController extends AdminController
         // GRID COLUMNS
         // =====================================================================
 
-        $grid->column('id', __('ID'))->sortable();
+        $grid->column('id', __('ID'))->sortable()->width(60);
 
         $grid->column('event_time', __('Event Time'))
             ->display(function ($time) {
                 if (!$time) return '-';
-                return Carbon::parse($time)->format('M d, Y H:i:s');
+                return Carbon::parse($time)->format('M d, H:i:s');
             })
-            ->sortable();
+            ->sortable()
+            ->width(120);
 
-        $grid->column('employee_no', __('Employee No'))
+        $grid->column('employee_no', __('Emp ID'))
             ->display(function ($no) {
-                return $no ? "<strong>{$no}</strong>" : '-';
+                return $no ? "<strong>{$no}</strong>" : '<span class="text-muted">-</span>';
             })
-            ->sortable();
+            ->sortable()
+            ->width(80);
 
         $grid->column('employee_name', __('Name'))
             ->display(function ($name) {
@@ -121,21 +123,27 @@ class EventLogController extends AdminController
             })
             ->sortable();
 
+        $grid->column('event_type', __('Event Type'))
+            ->display(function () {
+                $type = EventLog::getEventTypeName($this->major, $this->minor);
+                $badge = $this->major == 5 && in_array($this->minor, [75, 76, 77]) ? 'success' : 'info';
+                return "<span class='label label-{$badge}'>{$type}</span>";
+            });
+
+        $grid->column('major', __('Maj'))->width(50);
+        $grid->column('minor', __('Min'))->width(50);
+
         $grid->column('verify_mode', __('Method'))
             ->display(function ($mode) {
                 $icons = [
                     'face' => '<i class="fa fa-user-circle text-primary"></i> Face',
                     'card' => '<i class="fa fa-credit-card text-success"></i> Card',
                     'fingerprint' => '<i class="fa fa-hand-paper-o text-warning"></i> Fingerprint',
+                    'faceOrFpOrCardOrPw' => '<i class="fa fa-star text-info"></i> Multi',
                 ];
                 return $icons[$mode] ?? ($mode ?? '-');
-            });
-
-        $grid->column('event_type', __('Event Type'))
-            ->display(function () {
-                return EventLog::getEventTypeName($this->major, $this->minor);
             })
-            ->label('info');
+            ->width(100);
 
         $grid->column('process_status', __('Status'))
             ->using([
@@ -155,12 +163,47 @@ class EventLogController extends AdminController
                 EventLog::STATUS_PROCESSED => 'Processed',
                 EventLog::STATUS_FAILED => 'Failed',
                 EventLog::STATUS_SKIPPED => 'Skipped',
-            ]);
+            ])
+            ->width(100);
+
+        $grid->column('process_error', __('Skip/Error Reason'))
+            ->display(function ($error) {
+                if (!$error) return '-';
+                $short = strlen($error) > 50 ? substr($error, 0, 50) . '...' : $error;
+                return "<span class='text-danger' title='{$error}'>{$short}</span>";
+            })
+            ->width(200);
 
         $grid->column('user.name', __('Linked User'))
             ->display(function ($name) {
-                return $name ? "<span class='text-success'>{$name}</span>" : '<span class="text-muted">-</span>';
-            });
+                return $name ? "<span class='text-success'><i class='fa fa-check-circle'></i> {$name}</span>" : '<span class="text-muted">Not Linked</span>';
+            })
+            ->width(150);
+
+        $grid->column('door_no', __('Door'))
+            ->display(function ($door) {
+                return $door ?? '-';
+            })
+            ->width(80);
+
+        $grid->column('device_ip', __('Device IP'))
+            ->display(function ($ip) {
+                return $ip ? "<code>{$ip}</code>" : '-';
+            })
+            ->width(120);
+
+        $grid->column('card_no', __('Card'))
+            ->display(function ($card) {
+                return $card ?? '-';
+            })
+            ->hide();
+
+        $grid->column('picture_url', __('Picture'))
+            ->display(function ($url) {
+                if (!$url) return '-';
+                return "<a href='{$url}' target='_blank'><i class='fa fa-camera'></i> View</a>";
+            })
+            ->hide();
 
         $grid->column('temperature', __('Temp'))
             ->display(function ($temp) {
@@ -173,11 +216,11 @@ class EventLogController extends AdminController
         $grid->column('mask_detected', __('Mask'))
             ->display(function ($mask) {
                 if ($mask === null) return '-';
-                return $mask ? '<i class="fa fa-check text-success"></i>' : '<i class="fa fa-times text-danger"></i>';
+                return $mask ? '<i class="fa fa-check text-success"></i> Yes' : '<i class="fa fa-times text-danger"></i> No';
             })
             ->hide();
 
-        $grid->column('device_ip', __('Device'))
+        $grid->column('device_name', __('Device'))
             ->display(function ($ip) {
                 return $ip ?? '-';
             })
