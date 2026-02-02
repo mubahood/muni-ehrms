@@ -135,41 +135,28 @@ class AttendanceProcessingService
     }
 
     /**
-     * Check if the event is an attendance event (Access Granted)
+     * Check if the event is an attendance event (Accept all events with valid employee)
      *
      * @param EventLog $eventLog
      * @return bool
      */
     protected function isAttendanceEvent(EventLog $eventLog): bool
     {
-        // Check if event_type explicitly indicates access control
-        $validEventTypes = [
-            'AccessControllerEvent',
-            'Access Event',
-        ];
+        // Accept all events as long as we have a valid employee
+        // This allows for maximum flexibility in attendance tracking
         
-        if (in_array($eventLog->event_type, $validEventTypes)) {
-            return true;
-        }
-        
-        // Major event type 5 = Access Control
-        if ($eventLog->major != 5) {
+        // Must have employee information
+        if (empty($eventLog->employee_no) && empty($eventLog->employee_name)) {
             return false;
         }
         
-        // Access Granted minor types: 75, 76, 77
-        // OR Multi-mode verification which indicates successful access
-        $validMinorTypes = in_array($eventLog->minor, [75, 76, 77]);
-        $validVerifyMode = in_array($eventLog->verify_mode, [
-            'faceOrFpOrCardOrPw',
-            'face',
-            'card',
-            'fingerprint',
-            'password'
-        ]);
+        // If user is already linked or can be linked, accept the event
+        if ($eventLog->user_id || $eventLog->linkUser()) {
+            return true;
+        }
         
-        // Accept if either valid minor type OR valid verify mode (for access control events)
-        return $validMinorTypes || $validVerifyMode;
+        // If we can't find/link a user, reject the event
+        return false;
     }
 
     /**
