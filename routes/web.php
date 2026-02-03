@@ -624,6 +624,8 @@ Route::get('auth/login', function () {
     return view('auth/login');
 });
 
+Route::post('auth/login', 'App\Admin\Controllers\AuthController@postLogin');
+
 
 Route::get('print-gatepass', function (Request $request) {
     $item = VehicleRequest::find($request->gatepass_id);

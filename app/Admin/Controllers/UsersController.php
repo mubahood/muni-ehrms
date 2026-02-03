@@ -4,6 +4,7 @@ namespace App\Admin\Controllers;
 
 use App\Models\Department;
 use App\Models\User;
+use Encore\Admin\Auth\Database\Role;
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
@@ -32,6 +33,10 @@ class UsersController extends AdminController
         $grid->column('email', __('Email'));
         $grid->column('phone_number', __('Phone Number'));
         $grid->column('department.name', __('Department'));
+        $grid->column('roles', __('Roles'))->display(function ($roles) {
+            $roleNames = collect($roles)->pluck('name')->toArray();
+            return implode(', ', $roleNames);
+        });
         $grid->column('status', __('Status'))->display(function ($status) {
             return $status == 'Active' ? "<span class='label label-success'>Active</span>" : "<span class='label label-default'>Inactive</span>";
         });
@@ -55,6 +60,9 @@ class UsersController extends AdminController
         $show->field('email', __('Email'));
         $show->field('phone_number', __('Phone Number'));
         $show->field('department.name', __('Department'));
+        $show->field('roles', __('Roles'))->as(function ($roles) {
+            return collect($roles)->pluck('name')->implode(', ');
+        });
         $show->field('status', __('Status'));
         $show->field('created_at', __('Created at'));
         $show->field('updated_at', __('Updated at'));
@@ -78,6 +86,10 @@ class UsersController extends AdminController
         $form->select('department_id', __('Department'))
             ->options(Department::where('is_active', true)->pluck('name', 'id'))
             ->help('Assign this user to a department');
+        
+        $form->checkbox('roles', __('Roles'))
+            ->options(Role::all()->pluck('name', 'id'))
+            ->help('Assign roles to this user (Admin, HR, HOD, Employee)');
         
         $form->multipleSelect('work_days', __('Work Days'))
             ->options([

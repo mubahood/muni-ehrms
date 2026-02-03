@@ -33,6 +33,8 @@ use App\Models\VehicleRequest;
 use Carbon\Carbon;
 use Encore\Admin\Form;
 use Illuminate\Support\Facades\DB;
+use App\Services\AccessControlService;
+use App\Admin\Extensions\PermissionChecker;
 
 $x = 0;
 $max = 300;
@@ -54,6 +56,22 @@ $attendanceRecord = AttendanceRecord::whereDate('created_at', $today)
 if (!$attendanceRecord) { 
 }
 Utils::generate_attendance_records();
+
+// Override Laravel Admin's menu filtering to respect permissions
+Admin::booting(function () {
+    // Initialize our custom permission checker
+    PermissionChecker::intercept();
+    
+    // Filter menu items based on user permissions
+    Admin::menu()->filter(function ($item) {
+        // If no permission is set, allow access (backward compatibility)
+        if (empty($item['permission'])) {
+            return true;
+        }
+        
+        return AccessControlService::hasAccess($item['permission']);
+    });
+});
 
 // Extend the user form to include department assignment
 Admin::booting(function () {

@@ -44,6 +44,10 @@ return [
             'driver' => 'jwt',
             'provider' => 'users',
         ],
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admin',
+        ],
     ],
 
     /*
@@ -67,6 +71,10 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => Encore\Admin\Auth\Database\Administrator::class, 
+        ],
+        'admin' => [
+            'driver' => 'eloquent',
+            'model' => Encore\Admin\Auth\Database\Administrator::class,
         ],
 
         // 'users' => [
