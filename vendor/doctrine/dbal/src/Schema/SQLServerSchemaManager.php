@@ -55,7 +55,7 @@ class SQLServerSchemaManager extends AbstractSchemaManager
      */
     public function listTableDetails($name)
     {
-        Deprecation::trigger(
+        Deprecation::triggerIfCalledFromOutside(
             'doctrine/dbal',
             'https://github.com/doctrine/dbal/pull/5595',
             '%s is deprecated. Use introspectTable() instead.',
@@ -133,8 +133,16 @@ SQL,
 
         switch ($dbType) {
             case 'nchar':
-            case 'nvarchar':
             case 'ntext':
+                // Unicode data requires 2 bytes per character
+                $length /= 2;
+                break;
+
+            case 'nvarchar':
+                if ($length === -1) {
+                    break;
+                }
+
                 // Unicode data requires 2 bytes per character
                 $length /= 2;
                 break;
@@ -189,7 +197,7 @@ SQL,
 
     private function parseDefaultExpression(string $value): ?string
     {
-        while (preg_match('/^\((.*)\)$/s', $value, $matches)) {
+        while (preg_match('/^\((.*)\)$/s', $value, $matches) === 1) {
             $value = $matches[1];
         }
 
@@ -219,9 +227,15 @@ SQL,
             $name = $tableForeignKey['ForeignKey'];
 
             if (! isset($foreignKeys[$name])) {
+                $referencedTableName = $tableForeignKey['ReferenceTableName'];
+
+                if ($tableForeignKey['ReferenceSchemaName'] !== 'dbo') {
+                    $referencedTableName = $tableForeignKey['ReferenceSchemaName'] . '.' . $referencedTableName;
+                }
+
                 $foreignKeys[$name] = [
                     'local_columns' => [$tableForeignKey['ColumnName']],
-                    'foreign_table' => $tableForeignKey['ReferenceTableName'],
+                    'foreign_table' => $referencedTableName,
                     'foreign_columns' => [$tableForeignKey['ReferenceColumnName']],
                     'name' => $name,
                     'options' => [
@@ -403,7 +417,7 @@ WHERE type = 'U'
 ORDER BY name
 SQL;
 
-        return $this->_conn->executeQuery($sql, [$databaseName]);
+        return $this->_conn->executeQuery($sql);
     }
 
     protected function selectTableColumns(string $databaseName, ?string $tableName = null): Result
@@ -548,31 +562,29 @@ SQL;
     {
         $sql = <<<'SQL'
           SELECT
-            tbl.name,
+            scm.name AS schema_name,
+            tbl.name AS table_name,
             p.value AS [table_comment]
           FROM
             sys.tables AS tbl
+            JOIN sys.schemas AS scm
+              ON tbl.schema_id = scm.schema_id
             INNER JOIN sys.extended_properties AS p ON p.major_id=tbl.object_id AND p.minor_id=0 AND p.class=1
 SQL;
 
-        $conditions = ["SCHEMA_NAME(tbl.schema_id) = N'dbo'", "p.name = N'MS_Description'"];
-        $params     = [];
+        $conditions = ["p.name = N'MS_Description'"];
 
         if ($tableName !== null) {
-            $conditions[] = "tbl.name = N'" . $tableName . "'";
+            $conditions[] = $this->getTableWhereClause($tableName, 'scm.name', 'tbl.name');
         }
 
         $sql .= ' WHERE ' . implode(' AND ', $conditions);
 
-        /** @var array<string,array<string,mixed>> $metadata */
-        $metadata = $this->_conn->executeQuery($sql, $params)
-            ->fetchAllAssociativeIndexed();
-
         $tableOptions = [];
-        foreach ($metadata as $table => $data) {
+        foreach ($this->_conn->iterateAssociative($sql) as $data) {
             $data = array_change_key_case($data, CASE_LOWER);
 
-            $tableOptions[$table] = [
+            $tableOptions[$this->_getPortableTableDefinition($data)] = [
                 'comment' => $data['table_comment'],
             ];
         }
