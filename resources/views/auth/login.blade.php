@@ -515,7 +515,7 @@
                 </div>
                 <div class="branding-content">
                     <h2 class="university-name">
-                        Mountains of the Moon<br>University
+                        Muni University
                     </h2>
                     <p class="system-tagline">EHRMS Portal</p>
                     <p class="system-description">
@@ -610,7 +610,7 @@
         </div>
 
         <div class="footer-text">
-            &copy; {{ date('Y') }} Mountains of the Moon University. All Rights Reserved. | Powered by EHRMS
+            &copy; {{ date('Y') }} Muni University. All Rights Reserved. | Powered by EHRMS
         </div>
     </div>
 

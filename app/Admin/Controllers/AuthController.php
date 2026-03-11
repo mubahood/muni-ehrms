@@ -33,7 +33,16 @@ class AuthController extends BaseAuthController
             return back()->withErrors($validator)->withInput();
         }
 
-        if (Auth::guard('admin')->attempt($credentials, $request->has('remember'))) {
+        $remember = $request->has('remember');
+        $loginValue = $request->input('username');
+        $password = $request->input('password');
+
+        // Try authenticating by username first, then by email
+        if (Auth::guard('admin')->attempt(['username' => $loginValue, 'password' => $password], $remember)) {
+            return redirect()->intended('/');
+        }
+
+        if (Auth::guard('admin')->attempt(['email' => $loginValue, 'password' => $password], $remember)) {
             return redirect()->intended('/');
         }
 
