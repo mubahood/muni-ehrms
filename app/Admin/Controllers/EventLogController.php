@@ -245,7 +245,7 @@ class EventLogController extends AdminController
         // =====================================================================
 
         $grid->batchActions(function ($batch) {
-            $batch->disableDelete();
+            // Delete enabled for batch actions
         });
 
         // =====================================================================
@@ -253,7 +253,6 @@ class EventLogController extends AdminController
         // =====================================================================
 
         $grid->actions(function ($actions) {
-            $actions->disableDelete();
             $actions->disableEdit();
         });
 
