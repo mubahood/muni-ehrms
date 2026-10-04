@@ -4,323 +4,94 @@ namespace App\Services;
 
 use App\Models\AttendanceRecord;
 use App\Models\EventLog;
-use App\Models\Leave;
-use App\Models\SystemConfiguration;
-use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Turns device events into attendance.
+ *
+ * An event only has to be linked to a person and recognised as a clock-in;
+ * the day itself is then rebuilt by the AttendanceEngine from all of that
+ * person's clock-ins, so the order events arrive in, duplicates and late
+ * deliveries from the bridge make no difference to the result.
+ */
 class AttendanceProcessingService
 {
-    /**
-     * Process an event log and update the corresponding attendance record
-     *
-     * @param EventLog $eventLog
-     * @return bool
-     */
+    private AttendanceEngine $engine;
+
+    public function __construct(AttendanceEngine $engine)
+    {
+        $this->engine = $engine;
+    }
+
     public function processEventToAttendance(EventLog $eventLog): bool
     {
-        DB::beginTransaction();
-        
         try {
-            // Step 1: Validate user link
-            if (!$eventLog->user_id) {
-                if (!$eventLog->linkUser()) {
-                    $eventLog->markAsFailed("No user found for employee_no: {$eventLog->employee_no}");
-                    DB::commit();
-                    return false;
-                }
-            }
+            if (!$eventLog->user_id && !$eventLog->linkUser()) {
+                $eventLog->markAsFailed("No employee has Terminal ID {$eventLog->employee_no}" . ($eventLog->employee_name ? " (the terminal knows this person as {$eventLog->employee_name})" : '') . '. Set the Terminal ID on the employee record.');
 
-            // Step 2: Validate event type (Access Granted events only)
-            if (!$this->isAttendanceEvent($eventLog)) {
-                $eventLog->markAsSkipped('Event type not applicable for attendance');
-                DB::commit();
                 return false;
             }
 
-            // Step 3: Extract date and time
-            $eventDate = Carbon::parse($eventLog->event_time)->toDateString();
-            $eventTimeOnly = Carbon::parse($eventLog->event_time)->format('H:i:s');
-            $user = $eventLog->user;
+            if (!AttendanceEngine::isClockIn($eventLog)) {
+                $eventLog->markAsSkipped('Not a clock-in: the terminal did not authenticate this person');
 
-            // Step 4: Check user availability
-            if (!$user->isAvailableOnDay($eventDate)) {
-                $reason = $this->getUnavailabilityReason($user, $eventDate);
-                $eventLog->markAsSkipped($reason);
-                DB::commit();
                 return false;
             }
 
-            // Step 5: Get or create attendance record with row locking
-            $attendance = AttendanceRecord::lockForUpdate()
-                ->where('user_id', $eventLog->user_id)
-                ->where('attendance_date', $eventDate)
+            $user = $eventLog->user()->first();
+            $date = Carbon::parse($eventLog->event_time)->startOfDay();
+
+            if (!$this->engine->isExpected($user, $date)) {
+                $eventLog->markAsSkipped($user->status !== 'Active'
+                    ? "User is not active (Status: {$user->status})"
+                    : "Date is before user's start working date");
+
+                return false;
+            }
+
+            $this->engine->processDay($date, [$user->id]);
+
+            $record = AttendanceRecord::where('user_id', $user->id)
+                ->where('attendance_date', $date->toDateString())
                 ->first();
 
-            if (!$attendance) {
-                $attendance = AttendanceRecord::create([
-                    'user_id' => $eventLog->user_id,
-                    'attendance_date' => $eventDate,
-                    'status' => 'Absent',
-                    'day' => Carbon::parse($eventDate)->format('l'),
-                    'is_late' => 'No',
-                    'is_imported' => 'No',
-                    'source' => 'device',
-                    'hours' => 0
-                ]);
-            }
-
-            // Step 6: Determine clock-in or clock-out
-            if (empty($attendance->check_in_time)) {
-                // First scan of the day = clock-in
-                $attendance->check_in_time = $eventTimeOnly;
-                $attendance->is_late = $this->checkIfLate($user, $eventDate, $eventTimeOnly) ? 'Yes' : 'No';
-                $attendance->source = 'device';
-            } else {
-                // Subsequent scan = clock-out (always update to latest)
-                $attendance->check_out_time = $eventTimeOnly;
-                $attendance->source = 'device';
-            }
-
-            // Step 7: Calculate status
-            $attendance->status = $this->calculateStatus($user, $attendance, $eventDate);
-
-            // Step 8: Calculate hours if present
-            if ($attendance->status == 'Present' && $attendance->check_in_time && $attendance->check_out_time) {
-                $attendance->hours = $this->calculateHours($attendance->check_in_time, $attendance->check_out_time);
-            } elseif ($attendance->status == 'Half Day' && $attendance->check_in_time) {
-                // For half day, calculate hours up to now or end of work day
-                $checkOutTime = $attendance->check_out_time ?? Carbon::now()->format('H:i:s');
-                $attendance->hours = $this->calculateHours($attendance->check_in_time, $checkOutTime);
-            } else {
-                $attendance->hours = 0;
-            }
-
-            $attendance->save();
-
-            // Step 9: Link event to attendance
-            $eventLog->attendance_record_id = $attendance->id;
-            $eventLog->user_id = $user->id;
+            $eventLog->attendance_record_id = optional($record)->id;
             $eventLog->markAsProcessed();
 
-            DB::commit();
-
-            Log::info("Event processed successfully", [
-                'event_id' => $eventLog->id,
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-                'attendance_id' => $attendance->id,
-                'status' => $attendance->status,
-                'check_in' => $attendance->check_in_time,
-                'check_out' => $attendance->check_out_time
-            ]);
-
             return true;
-
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $e) {
             $eventLog->markAsFailed($e->getMessage());
-            
-            Log::error("Event processing failed", [
+            Log::error('Event processing failed', [
                 'event_id' => $eventLog->id,
                 'employee_no' => $eventLog->employee_no,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
-            
+
             return false;
         }
     }
 
     /**
-     * Check if the event is an attendance event (Accept all events with valid employee)
+     * Process events that have not been processed yet, oldest first.
      *
-     * @param EventLog $eventLog
-     * @return bool
-     */
-    protected function isAttendanceEvent(EventLog $eventLog): bool
-    {
-        // Accept all events as long as we have a valid employee
-        // This allows for maximum flexibility in attendance tracking
-        
-        // Must have employee information
-        if (empty($eventLog->employee_no) && empty($eventLog->employee_name)) {
-            return false;
-        }
-        
-        // If user is already linked or can be linked, accept the event
-        if ($eventLog->user_id || $eventLog->linkUser()) {
-            return true;
-        }
-        
-        // If we can't find/link a user, reject the event
-        return false;
-    }
-
-    /**
-     * Get the reason why a user is unavailable on a specific date
-     *
-     * @param User $user
-     * @param string $date
-     * @return string
-     */
-    protected function getUnavailabilityReason(User $user, string $date): string
-    {
-        if ($user->status != 'Active') {
-            return "User is not active (Status: {$user->status})";
-        }
-
-        $carbonDate = Carbon::parse($date);
-        
-        if ($user->start_working_date && $carbonDate->lt(Carbon::parse($user->start_working_date))) {
-            return "Date is before user's start working date";
-        }
-
-        $dayOfWeek = $carbonDate->format('l');
-        $workDays = is_array($user->work_days) ? $user->work_days : json_decode($user->work_days, true);
-        
-        if (!in_array($dayOfWeek, $workDays ?? [])) {
-            return "Not a work day for this user (Day: {$dayOfWeek})";
-        }
-
-        $leave = Leave::where('user_id', $user->id)
-            ->where('start_date', '<=', $date)
-            ->where('end_date', '>=', $date)
-            ->first();
-
-        if ($leave) {
-            return "User has active leave ({$leave->leave_type})";
-        }
-
-        return "User is unavailable for unknown reason";
-    }
-
-    /**
-     * Check if the clock-in time is late
-     *
-     * @param User $user
-     * @param string $date
-     * @param string $checkInTime
-     * @return bool
-     */
-    protected function checkIfLate(User $user, string $date, string $checkInTime): bool
-    {
-        // Use user-specific late time if set, otherwise use system configuration
-        $lateThreshold = $user->custom_late_time;
-        
-        if (!$lateThreshold) {
-            $systemConfig = SystemConfiguration::first();
-            $lateThreshold = $systemConfig ? $systemConfig->late_time : '08:30:00';
-        }
-
-        return $checkInTime > $lateThreshold;
-    }
-
-    /**
-     * Calculate the attendance status based on check-in/check-out times and leave status
-     *
-     * @param User $user
-     * @param AttendanceRecord $attendance
-     * @param string $date
-     * @return string
-     */
-    protected function calculateStatus(User $user, AttendanceRecord $attendance, string $date): string
-    {
-        // Check if user has active leave for this date
-        $hasLeave = Leave::where('user_id', $user->id)
-            ->where('start_date', '<=', $date)
-            ->where('end_date', '>=', $date)
-            ->exists();
-
-        if ($hasLeave) {
-            return 'On Leave';
-        }
-
-        // Check attendance based on clock-in and clock-out times
-        if ($attendance->check_in_time && $attendance->check_out_time) {
-            return 'Present';
-        }
-
-        if ($attendance->check_in_time && !$attendance->check_out_time) {
-            // If it's still today and before 5 PM, status is pending (keep as current)
-            // If it's past 5 PM or a past date, mark as Half Day
-            $now = Carbon::now();
-            $attendanceDate = Carbon::parse($date);
-            
-            if ($attendanceDate->isToday() && $now->hour < 17) {
-                // Still working, status pending
-                return $attendance->status == 'Present' ? 'Present' : 'Half Day';
-            } else {
-                // Day is over or past date without clock-out
-                return 'Half Day';
-            }
-        }
-
-        // No check-in and no check-out
-        return 'Absent';
-    }
-
-    /**
-     * Calculate hours worked between check-in and check-out times
-     * Deducts break time if applicable
-     *
-     * @param string $checkInTime
-     * @param string $checkOutTime
-     * @return float
-     */
-    protected function calculateHours(string $checkInTime, string $checkOutTime): float
-    {
-        $checkIn = Carbon::parse($checkInTime);
-        $checkOut = Carbon::parse($checkOutTime);
-
-        // Calculate total minutes worked
-        $totalMinutes = $checkOut->diffInMinutes($checkIn);
-
-        // Convert to hours with 2 decimal places
-        $hours = $totalMinutes / 60;
-
-        // Deduct break time if worked more than 4 hours (assumes 1-hour lunch break)
-        if ($hours > 4) {
-            $hours -= 1; // Deduct 1 hour for lunch break
-        }
-
-        return round($hours, 2);
-    }
-
-    /**
-     * Process multiple unprocessed events in batch
-     *
-     * @param int $limit
-     * @return array
+     * @return array{processed:int, failed:int, skipped:int, total:int}
      */
     public function processBatchUnprocessedEvents(int $limit = 100): array
     {
-        $events = EventLog::unprocessed()
-            ->orderBy('event_time', 'asc')
-            ->limit($limit)
-            ->get();
-
-        $results = [
-            'processed' => 0,
-            'failed' => 0,
-            'skipped' => 0,
-            'total' => $events->count()
-        ];
+        $events = EventLog::unprocessed()->orderBy('event_time')->limit($limit)->get();
+        $results = ['processed' => 0, 'failed' => 0, 'skipped' => 0, 'total' => $events->count()];
 
         foreach ($events as $event) {
-            $success = $this->processEventToAttendance($event);
-            
-            // Refresh to get updated status
+            $this->processEventToAttendance($event);
             $event->refresh();
-            
-            if ($event->process_status == EventLog::STATUS_PROCESSED) {
-                $results['processed']++;
-            } elseif ($event->process_status == EventLog::STATUS_FAILED) {
-                $results['failed']++;
-            } elseif ($event->process_status == EventLog::STATUS_SKIPPED) {
-                $results['skipped']++;
+            $key = [
+                EventLog::STATUS_PROCESSED => 'processed',
+                EventLog::STATUS_FAILED => 'failed',
+                EventLog::STATUS_SKIPPED => 'skipped',
+            ][$event->process_status] ?? null;
+            if ($key) {
+                $results[$key]++;
             }
         }
 

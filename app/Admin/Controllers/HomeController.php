@@ -3,175 +3,149 @@
 namespace App\Admin\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\AttendanceRecord;
+use App\Models\Department;
 use App\Models\Leave;
-use App\Models\SystemConfiguration; // <-- IMPORT THIS
 use App\Models\User;
+use App\Services\AccessPolicy;
+use App\Services\AttendanceStats;
+use App\Services\LeaveWorkflow;
+use App\Services\Scope;
 use Carbon\Carbon;
 use Encore\Admin\Facades\Admin;
-use Encore\Admin\Layout\Column;
 use Encore\Admin\Layout\Content;
-use Encore\Admin\Layout\Row;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
+/**
+ * The dashboard. People who look after staff see their scope (department,
+ * faculty or university), filterable by faculty and department; everyone
+ * else sees their own attendance.
+ */
 class HomeController extends Controller
 {
-    public function index(Content $content)
+    public function index(Content $content, Request $request)
     {
+        /** @var User $me */
+        $me = Admin::user();
+        if (Scope::level($me) === Scope::SELF && !array_diff(AccessPolicy::rolesOf($me), ['employee'])) {
+            return app(StaffDashboardController::class)->mine($content, $request);
+        }
 
+        $userIds = $this->filteredUserIds($me, $request);
+        $month = $this->month($request);
+        $monthEnd = $month->copy()->endOfMonth()->min(today());
+        $thirtyDays = today()->subDays(29);
+        $weekStart = today()->startOfWeek();
 
-        $user = Admin::user();
-        $config = SystemConfiguration::first(); // <-- GET SYSTEM CONFIG
-        $companyName = env('APP_NAME', 'Muni University EHRMS');
-        $TIME_NOW = Carbon::now()->format('H:i:s'); // <-- CURRENT TIME
+        $day = AttendanceStats::referenceDay($userIds);
+        $trendFrom = today()->subDays(41);
 
-        $content
-            ->title('TIME: ' . $TIME_NOW)
-            ->description("Welcome to {$companyName}");
+        $data = [
+            'day' => $day,
+            'me' => $me,
+            'scopeLabel' => Scope::label($me),
+            'faculties' => Scope::faculties($me),
+            'departments' => Scope::departments($me),
+            'filters' => $request->only(['faculty', 'department', 'month']),
+            'month' => $month,
+            'today' => AttendanceStats::today($userIds, $day),
+            'trendDaily' => AttendanceStats::daily($userIds, $trendFrom, today()),
+            'weekly' => AttendanceStats::weekly($userIds, 12),
+            'spread' => AttendanceStats::arrivalSpread($userIds, $month, $monthEnd),
+            'monthSummary' => AttendanceStats::summary($userIds, $month, $monthEnd),
+            'monthDaily' => AttendanceStats::daily($userIds, $month, $monthEnd),
+            'week' => AttendanceStats::daily($userIds, $weekStart, today()),
+            'topAbsent' => AttendanceStats::top($userIds, $thirtyDays, today(), 'absent'),
+            'topLate' => AttendanceStats::top($userIds, $thirtyDays, today(), 'late'),
+            'waiting' => AccessPolicy::allows($me, 'leave.approve') ? LeaveWorkflow::pendingFor($me)->limit(6)->get() : collect(),
+            'waitingCount' => AccessPolicy::allows($me, 'leave.approve') ? LeaveWorkflow::pendingFor($me)->count() : 0,
+            'upcomingLeave' => $this->upcomingLeave($userIds),
+            'league' => $this->league($userIds, $month, $monthEnd),
+            'setup' => \App\Services\SetupCheck::items($me),
+            'offerDemo' => !$me->isDemo() && \App\Services\AccessPolicy::allows($me, 'demo.manage') && \App\Services\DemoSandbox::exists()
+                && !\App\Models\AttendanceRecord::whereIn('user_id', $userIds ?? [0])->where('status', 'Present')
+                    ->where('attendance_date', '>=', today()->subDays(14)->toDateString())->exists(),
+            'greeting' => now()->hour < 12 ? 'Good morning' : (now()->hour < 17 ? 'Good afternoon' : 'Good evening'),
+        ];
 
-        // --- Date variables ---
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
-        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->toDateString();
-        $startOfMonth = Carbon::now()->startOfMonth();
-        $endOfMonth = Carbon::now()->endOfMonth();
-        $thirtyDaysAgo = Carbon::now()->subDays(30);
+        return $content
+            ->title($data['greeting'] . ', ' . explode(' ', $me->displayName())[0])
+            ->description($data['scopeLabel'] . ' · ' . today()->format('l j F Y'))
+            ->body(view('ehrms.dashboard', $data));
+    }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Row 1: KPI Cards
-        |--------------------------------------------------------------------------
-        */
-        $content->row(function (Row $row) use ($startOfWeek, $endOfWeek) {
+    /** People in the viewer's scope, narrowed by the faculty / department filters. */
+    private function filteredUserIds(User $me, Request $request): ?array
+    {
+        $ids = Scope::userIds($me);
+        $departmentIds = null;
 
-            // Card 1: Present This Week
-            $row->column(3, function (Column $column) use ($startOfWeek, $endOfWeek) {
-                $count = AttendanceRecord::whereBetween('attendance_date', [$startOfWeek, $endOfWeek])->where('status', 'Present')->count();
-                $column->append(view('admin.widgets.kpi_card', [
-                    'title'  => 'Present This Week',
-                    'number' => $count,
-                    'icon'   => 'fa-check-square-o',
-                    'color_class' => 'bg-primary-green',
-                ]));
-            });
+        if ($request->filled('department')) {
+            $departmentIds = [(int) $request->input('department')];
+        } elseif ($request->input('faculty') === 'admin') {
+            $departmentIds = Department::where('type', Department::ADMINISTRATIVE)->pluck('id')->all();
+        } elseif ($request->filled('faculty')) {
+            $departmentIds = Department::where('faculty_id', (int) $request->input('faculty'))->pluck('id')->all();
+        }
 
-            // Card 2: Absences This Week
-            $row->column(3, function (Column $column) use ($startOfWeek, $endOfWeek) {
-                $count = AttendanceRecord::whereBetween('attendance_date', [$startOfWeek, $endOfWeek])->where('status', 'Absent')->count();
-                $column->append(view('admin.widgets.kpi_card', [
-                    'title'  => 'Absences This Week',
-                    'number' => $count,
-                    'icon'   => 'fa-user-times',
-                    'color_class' => 'bg-red-accent',
-                ]));
-            });
+        if ($departmentIds === null) {
+            return $ids;
+        }
+        // A filter can only narrow what the viewer may see.
+        $allowed = Scope::departmentIds($me);
+        if ($allowed !== null) {
+            $departmentIds = array_values(array_intersect($departmentIds, $allowed));
+        }
+        $filtered = User::whereIn('department_id', $departmentIds ?: [0])->pluck('id')->all();
 
-            // Card 3: Late Arrivals This Week
-            $row->column(3, function (Column $column) use ($startOfWeek, $endOfWeek) {
-                $count = AttendanceRecord::whereBetween('attendance_date', [$startOfWeek, $endOfWeek])->where('is_late', 'Yes')->count();
-                $column->append(view('admin.widgets.kpi_card', [
-                    'title'  => 'Late Arrivals This Week',
-                    'number' => $count,
-                    'icon'   => 'fa-clock-o',
-                    'color_class' => 'bg-yellow-accent',
-                ]));
-            });
+        return $ids === null ? $filtered : array_values(array_intersect($ids, $filtered));
+    }
 
-            // Card 4: On Leave This Week
-            $row->column(3, function (Column $column) use ($startOfWeek, $endOfWeek) {
-                $count = Leave::where('start_date', '<=', $endOfWeek)->where('end_date', '>=', $startOfWeek)->count();
-                $column->append(view('admin.widgets.kpi_card', [
-                    'title'  => 'On Leave This Week',
-                    'number' => $count,
-                    'icon'   => 'fa-suitcase',
-                    'color_class' => 'bg-aqua-accent',
-                ]));
-            });
-        });
+    private function month(Request $request): Carbon
+    {
+        try {
+            $month = $request->filled('month') ? Carbon::createFromFormat('Y-m', $request->input('month'))->startOfMonth() : today()->startOfMonth();
+        } catch (\Throwable $e) {
+            $month = today()->startOfMonth();
+        }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Row 2: Charts for Visual Trends
-        |--------------------------------------------------------------------------
-        */
-        $content->row(function (Row $row) use ($startOfMonth, $endOfMonth, $thirtyDaysAgo) {
+        return $month->gt(today()) ? today()->startOfMonth() : $month;
+    }
 
-            // Pie Chart
-            $row->column(6, function (Column $column) use ($startOfMonth, $endOfMonth) {
-                // ... same logic as before ...
-                $presentCount = AttendanceRecord::whereBetween('attendance_date', [$startOfMonth, $endOfMonth])->where('status', 'Present')->count();
-                $absentCount = AttendanceRecord::whereBetween('attendance_date', [$startOfMonth, $endOfMonth])->where('status', 'Absent')->count();
-                $leaveCount = Leave::where('start_date', '<=', $endOfMonth)->where('end_date', '>=', $startOfMonth)->count();
-                $pieChartData = ['labels' => ['Present', 'Absent', 'On Leave'], 'data' => [$presentCount, $absentCount, $leaveCount]];
-                $column->append(view('admin.charts.attendance_pie_chart', $pieChartData));
-            });
+    /**
+     * Each department's attendance rate for the month, lowest first: where a
+     * manager should look. Same figures as the summary report.
+     */
+    private function league(?array $userIds, Carbon $from, Carbon $to)
+    {
+        return AttendanceStats::perPerson($userIds, $from, $to)
+            ->groupBy('department')
+            ->map(function ($rows, $name) {
+                $expected = $rows->sum('working') - $rows->sum('on_leave');
 
-            // In HomeController.php
-
-            // Bar Chart: Weekly Attendance Summary
-            $row->column(6, function (Column $column) use ($thirtyDaysAgo) {
-                // 1. UPDATE THE QUERY to select the new "on_time_count"
-                $issuesData = AttendanceRecord::where('attendance_date', '>=', $thirtyDaysAgo)
-                    ->select(
-                        'day',
-                        DB::raw("SUM(CASE WHEN status = 'Present' AND is_late = 'No' THEN 1 ELSE 0 END) as on_time_count"),
-                        DB::raw("SUM(CASE WHEN is_late = 'Yes' THEN 1 ELSE 0 END) as late_count"),
-                        DB::raw("SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as absent_count")
-                    )
-                    ->groupBy('day')
-                    ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')")
-                    ->get();
-
-                $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-                // 2. INITIALIZE the new array for on-time counts
-                $onTimeCounts = array_fill_keys($days, 0);
-                $lateCounts = array_fill_keys($days, 0);
-                $absentCounts = array_fill_keys($days, 0);
-
-                // 3. POPULATE the new array
-                foreach ($issuesData as $data) {
-                    $onTimeCounts[$data->day] = (int)$data->on_time_count;
-                    $lateCounts[$data->day] = (int)$data->late_count;
-                    $absentCounts[$data->day] = (int)$data->absent_count;
-                }
-
-                // 4. PASS the new data to the view
-                $barChartData = [
-                    'labels'        => $days,
-                    'on_time_data'  => array_values($onTimeCounts),
-                    'late_data'     => array_values($lateCounts),
-                    'absent_data'   => array_values($absentCounts),
+                return (object) [
+                    'id' => $rows->first()->department_id,
+                    'name' => $name,
+                    'present' => $rows->sum('present'),
+                    'expected' => $expected,
+                    'staff' => $rows->count(),
+                    'late' => $rows->sum('late'),
+                    'rate' => $expected > 0 ? round(100 * $rows->sum('present') / $expected, 1) : null,
                 ];
-                $column->append(view('admin.charts.weekly_issues_bar_chart', $barChartData));
-            });
-        });
+            })
+            ->filter(fn ($d) => $d->rate !== null)
+            ->sortBy('rate')
+            ->values();
+    }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Row 3: Actionable Lists
-        |--------------------------------------------------------------------------
-        */
-        $content->row(function (Row $row) use ($thirtyDaysAgo) {
-
-            // Top Absentees
-            $row->column(6, function (Column $column) use ($thirtyDaysAgo) {
-                // ... same logic as before ...
-                $topAbsentees = User::withCount(['attendanceRecords' => function ($query) use ($thirtyDaysAgo) {
-                    $query->where('status', 'Absent')->where('attendance_date', '>=', $thirtyDaysAgo);
-                }])->orderBy('attendance_records_count', 'desc')->take(5)->get();
-                $column->append(view('admin.lists.top_employees', ['title' => 'Top Absentees (Last 30 Days)', 'users' => $topAbsentees, 'count_field' => 'attendance_records_count', 'count_label' => 'Days', 'count_class' => 'count-danger']));
-            });
-
-            // Top Latecomers
-            $row->column(6, function (Column $column) use ($thirtyDaysAgo) {
-                // ... same logic as before ...
-                $topLatecomers = User::withCount(['attendanceRecords' => function ($query) use ($thirtyDaysAgo) {
-                    $query->where('is_late', 'Yes')->where('attendance_date', '>=', $thirtyDaysAgo);
-                }])->orderBy('attendance_records_count', 'desc')->take(5)->get();
-                $column->append(view('admin.lists.top_employees', ['title' => 'Top Late Arrivals (Last 30 Days)', 'users' => $topLatecomers, 'count_field' => 'attendance_records_count', 'count_label' => 'Times', 'count_class' => 'count-warning']));
-            });
-        });
-
-        return $content;
+    private function upcomingLeave(?array $userIds)
+    {
+        return Leave::with('user.department')
+            ->whereIn('status', [Leave::APPROVED])
+            ->where('end_date', '>=', today()->toDateString())
+            ->where('start_date', '<=', today()->addDays(14)->toDateString())
+            ->when($userIds !== null, fn ($q) => $q->whereIn('user_id', $userIds ?: [0]))
+            ->orderBy('start_date')
+            ->limit(8)
+            ->get();
     }
 }

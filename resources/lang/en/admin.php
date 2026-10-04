@@ -44,7 +44,7 @@ return [
     'back_to_list'          => 'Back to List',
     'submit'                => 'Submit',
     'menu'                  => 'Menu',
-    'input'                 => 'Input',
+    'input'                 => 'Enter',
     'succeeded'             => 'Succeeded',
     'failed'                => 'Failed',
     'delete_confirm'        => 'Are you sure to delete this item ?',

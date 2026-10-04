@@ -2,635 +2,297 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Muni University EHRMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#800000">
+    <title>Sign in | Muni University EHRMS</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url('assets/brand/favicon-32.png') }}">
+    <link rel="apple-touch-icon" href="{{ url('assets/brand/apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --muni-maroon: #800000;
-            --muni-dark: #600000;
-            --muni-darker: #400000;
-            --muni-light: #a00000;
-            --gold-accent: #D4AF37;
-            --text-primary: #1a1a2e;
-            --text-secondary: #4a5568;
-            --text-muted: #718096;
-            --bg-white: #ffffff;
-            --bg-light: #f7fafc;
-            --bg-lighter: #fafbfc;
-            --border-color: #e2e8f0;
-            --error-red: #dc3545;
-            --success-green: #28a745;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
-            --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.12);
+            --maroon: #800000; --maroon-800: #5a0000; --maroon-tint: #f8eded;
+            --ink: #161616; --ink-2: #3f3f3f; --muted: #727272; --line: #dedede; --line-soft: #ececec;
+            --danger: #b42318; --ease: cubic-bezier(.2, .7, .2, 1);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        *, *::before, *::after { box-sizing: border-box; border-radius: 0; }
+        html, body { height: 100%; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--muni-maroon) 0%, var(--muni-dark) 50%, var(--muni-darker) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            margin: 0; color: var(--ink); background: #fff; font: 13px/1.45 'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased; display: grid; grid-template-columns: minmax(360px, 44%) 1fr; min-height: 100vh;
         }
 
-        /* Animated Background Pattern */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(128, 0, 0, 0.1) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 1;
+        /* ---------------------------------------------------- identity half */
+        .brand {
+            background: var(--maroon); color: #fff; display: flex; flex-direction: column; justify-content: space-between;
+            padding: 36px 44px 28px; position: relative; overflow: hidden;
         }
-
-        .login-wrapper {
-            width: 100%;
-            max-width: 1100px;
-            padding: 20px;
-            z-index: 2;
-            position: relative;
+        .brand::after { /* one quiet diagonal for depth, nothing decorative */
+            content: ""; position: absolute; right: -20%; bottom: -30%; width: 70%; height: 80%;
+            background: var(--maroon-800); transform: rotate(-18deg); opacity: .55; pointer-events: none;
         }
+        .brand > * { position: relative; z-index: 1; }
+        .mark { display: flex; align-items: center; gap: 12px; }
+        .mark img { width: 46px; height: 50px; object-fit: contain; background: #fff; padding: 3px; }
+        .mark b { display: block; font-size: 15px; font-weight: 800; letter-spacing: .01em; }
+        .mark span { display: block; font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: rgba(255, 255, 255, .7); margin-top: 2px; }
+        .pitch h1 { margin: 0; font-size: 30px; line-height: 1.12; font-weight: 800; letter-spacing: -.02em; max-width: 13em; }
+        .pitch p { margin: 12px 0 0; font-size: 14px; color: rgba(255, 255, 255, .78); max-width: 27em; }
+        .caps { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 7px; }
+        .caps li { display: flex; gap: 10px; align-items: center; font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, .92); }
+        .caps li::before { content: ""; width: 14px; height: 2px; background: #fff; flex: none; }
+        .legal { font-size: 11.5px; color: rgba(255, 255, 255, .6); display: flex; justify-content: space-between; gap: 12px; }
 
-        .login-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            background: var(--bg-white);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: var(--shadow-xl);
-            min-height: 650px;
+        /* ------------------------------------------------------- form half */
+        main { display: flex; align-items: center; justify-content: center; padding: 28px 24px; }
+        .sheet { width: 100%; max-width: 344px; }
+        .sheet h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.015em; }
+        .sheet .sub { margin: 3px 0 18px; color: var(--muted); font-size: 13px; }
+        .alert { border-left: 3px solid var(--danger); background: #fff6f5; color: var(--danger); padding: 8px 10px; font-size: 12.5px; font-weight: 600; margin-bottom: 12px; }
+        .field { margin-bottom: 11px; }
+        .field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+        .control { position: relative; }
+        .control input {
+            width: 100%; height: 38px; padding: 0 11px; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink);
+            background: #fff; border: 1px solid #cfcfcf; outline: none; transition: border-color .12s var(--ease), box-shadow .12s var(--ease);
         }
-
-        /* Left Panel - Branding */
-        .branding-panel {
-            background: linear-gradient(135deg, var(--muni-maroon) 0%, var(--muni-dark) 100%);
-            padding: 60px 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+        .control input::placeholder { color: #a5a5a5; font-weight: 400; }
+        .control input:hover { border-color: #b3b3b3; }
+        .control input:focus { border-color: var(--maroon); box-shadow: 0 0 0 3px rgba(128, 0, 0, .12); }
+        .field.invalid input { border-color: var(--danger); }
+        .control .reveal {
+            position: absolute; right: 1px; top: 1px; bottom: 1px; width: 58px; border: 0; border-left: 1px solid var(--line-soft);
+            background: #fff; color: var(--muted); font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer;
         }
-
-        .branding-panel::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 30s linear infinite;
+        .control .reveal:hover { color: var(--maroon); }
+        .control.with-reveal input { padding-right: 66px; }
+        .row { display: flex; align-items: center; justify-content: space-between; margin: 2px 0 14px; }
+        .remember { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; user-select: none; }
+        .remember input { width: 15px; height: 15px; margin: 0; accent-color: var(--maroon); }
+        .row a { font-size: 12.5px; color: var(--maroon); font-weight: 600; text-decoration: none; }
+        .row a:hover { text-decoration: underline; }
+        .submit {
+            width: 100%; height: 40px; border: 0; background: var(--maroon); color: #fff; font: inherit; font-size: 13px; font-weight: 700;
+            letter-spacing: .08em; text-transform: uppercase; cursor: pointer; position: relative; transition: background .12s var(--ease), transform .08s;
         }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .submit:hover { background: var(--maroon-800); }
+        .submit:active { transform: translateY(1px); }
+        .submit:focus-visible { outline: 2px solid var(--maroon); outline-offset: 2px; }
+        .submit.busy { color: transparent; pointer-events: none; }
+        .submit.busy::after {
+            content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
+            border: 2px solid #fff; border-color: #fff #fff transparent transparent; border-radius: 50%; animation: spin .7s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .university-logo {
-            width: 140px;
-            height: 140px;
-            margin-bottom: 30px;
-            position: relative;
-            z-index: 2;
+        /* ------------------------------------------------- demo accounts */
+        .try-demo { margin-top: 18px; width: 100%; display: flex; align-items: center; gap: 12px; padding: 11px 14px; background: #fff; cursor: pointer;
+            border: 1px dashed #c9a3a3; color: var(--ink); text-align: left; font: inherit; transition: background .14s var(--ease), border-color .14s var(--ease); }
+        .try-demo:hover { background: var(--maroon-tint); border-color: var(--maroon); border-style: solid; }
+        .try-demo:focus-visible { outline: 2px solid var(--maroon); outline-offset: 2px; }
+        .try-demo .ic { flex: 0 0 34px; height: 34px; display: grid; place-items: center; background: var(--maroon); color: #fff; font-weight: 800; font-size: 15px; }
+        .try-demo b { display: block; font-size: 13px; }
+        .try-demo span { display: block; font-size: 11.5px; color: var(--muted); }
+        .try-demo .go { margin-left: auto; color: var(--maroon); font-weight: 800; font-size: 18px; }
+
+        .dm { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(22, 22, 22, .55); }
+        .dm.open { display: flex; animation: dm-fade .16s var(--ease); }
+        .dm-box { background: #fff; width: min(760px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(0, 0, 0, .3);
+            border-top: 4px solid var(--maroon); animation: dm-rise .2s var(--ease); }
+        .dm-head { padding: 16px 20px 12px; border-bottom: 1px solid var(--line-soft); display: flex; gap: 12px; align-items: flex-start; }
+        .dm-head h3 { margin: 0; font-size: 16px; font-weight: 800; }
+        .dm-head p { margin: 3px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+        .dm-head code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--maroon); font-weight: 700; background: var(--maroon-tint); padding: 0 4px; }
+        .dm-x { margin-left: auto; border: 0; background: none; font-size: 22px; line-height: 1; color: var(--muted); cursor: pointer; padding: 0 2px; }
+        .dm-x:hover { color: var(--maroon); }
+        .dm-body { overflow-y: auto; padding: 4px 20px 16px; }
+        .dm-group { margin-top: 12px; }
+        .dm-group > b { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+        .dm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+        .dm-acc { display: flex; gap: 10px; align-items: center; text-align: left; width: 100%; padding: 9px 10px; background: #fff; border: 1px solid var(--line); cursor: pointer; font: inherit; color: var(--ink);
+            transition: border-color .12s, background .12s, transform .12s var(--ease); }
+        .dm-acc:hover, .dm-acc:focus-visible { border-color: var(--maroon); background: var(--maroon-tint); outline: none; transform: translateY(-1px); }
+        .dm-acc .av { flex: 0 0 34px; height: 34px; display: grid; place-items: center; font-size: 11.5px; font-weight: 800; color: var(--maroon); background: var(--maroon-tint); border: 1px solid #ead0d0; }
+        .dm-acc:hover .av { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+        .dm-acc .t { min-width: 0; }
+        .dm-acc .n { display: block; font-weight: 700; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dm-acc .p { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dm-acc .u { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; color: var(--maroon); margin-top: 1px; }
+        .dm-acc.busy { pointer-events: none; opacity: .7; }
+        .dm-foot { padding: 10px 20px; border-top: 1px solid var(--line-soft); background: #fafafa; font-size: 11.5px; color: var(--muted); }
+        @keyframes dm-fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes dm-rise { from { transform: translateY(10px); opacity: .6; } to { transform: none; opacity: 1; } }
+        @media (max-width: 640px) {
+            .dm { padding: 0; align-items: stretch; }
+            .dm-box { max-height: 100vh; width: 100%; border-top-width: 3px; }
+            .dm-grid { grid-template-columns: 1fr; }
         }
-
-        .university-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-            background: white;
-            border-radius: 50%;
-            padding: 10px;
-            border: 4px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .branding-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .university-name {
-            font-size: 32px;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 12px;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .system-tagline {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 400;
-            margin-bottom: 8px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .system-description {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 300;
-            line-height: 1.6;
-            max-width: 360px;
-            margin: 20px auto 0;
-        }
-
-        .feature-badges {
-            display: flex;
-            gap: 12px;
-            margin-top: 40px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .badge {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: white;
-            font-weight: 500;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* Right Panel - Login Form */
-        .login-panel {
-            padding: 60px 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: var(--bg-white);
-        }
-
-        .login-header {
-            margin-bottom: 40px;
-        }
-
-        .login-header h1 {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-            letter-spacing: -0.5px;
-        }
-
-        .login-header p {
-            font-size: 15px;
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-
-        .login-form {
-            width: 100%;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-            position: relative;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 16px;
-            z-index: 2;
-            transition: color 0.3s;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 14px 16px 14px 46px;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--text-primary);
-            background: var(--bg-lighter);
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .form-control::placeholder {
-            color: var(--text-muted);
-            font-weight: 400;
-        }
-
-        .form-control:hover {
-            border-color: var(--muni-light);
-            background: var(--bg-white);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--muni-maroon);
-            background: var(--bg-white);
-            box-shadow: 0 0 0 4px rgba(128, 0, 0, 0.08);
-        }
-
-        .form-control:focus + .input-icon {
-            color: var(--muni-maroon);
-        }
-
-        .has-error .form-control {
-            border-color: var(--error-red);
-            background: #fff5f5;
-        }
-
-        .has-error .input-icon {
-            color: var(--error-red);
-        }
-
-        .help-block {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--error-red);
-            font-size: 13px;
-            margin-top: 8px;
-            font-weight: 500;
-        }
-
-        .help-block i {
-            font-size: 14px;
-        }
-
-        .remember-forgot {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 28px;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .remember-me input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: var(--muni-maroon);
-        }
-
-        .forgot-password {
-            font-size: 14px;
-            color: var(--muni-maroon);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s;
-        }
-
-        .forgot-password:hover {
-            color: var(--muni-dark);
-            text-decoration: underline;
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, var(--muni-maroon) 0%, var(--muni-dark) 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(128, 0, 0, 0.25);
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-submit::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-submit:hover::before {
-            left: 100%;
-        }
-
-        .btn-submit:hover {
-            background: linear-gradient(135deg, var(--muni-dark) 0%, var(--muni-darker) 100%);
-            box-shadow: 0 6px 20px rgba(128, 0, 0, 0.35);
-            transform: translateY(-2px);
-        }
-
-        .btn-submit:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(128, 0, 0, 0.25);
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 32px 0;
-            color: var(--text-muted);
-            font-size: 13px;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-color);
-        }
-
-        .divider span {
-            padding: 0 16px;
-            font-weight: 500;
-        }
-
-        .support-info {
-            text-align: center;
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .support-info p {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .support-info a {
-            color: var(--muni-maroon);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .support-info a:hover {
-            text-decoration: underline;
-        }
-
-        .footer-text {
-            text-align: center;
-            margin-top: 24px;
-            padding: 0 20px;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 968px) {
-            .login-container {
-                grid-template-columns: 1fr;
-                max-width: 480px;
-                margin: 0 auto;
-            }
-
-            .branding-panel {
-                display: none;
-            }
-
-            .login-panel {
-                padding: 40px 30px;
-            }
-
-            .university-name {
-                font-size: 28px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .login-wrapper {
-                padding: 12px;
-            }
-
-            .login-panel {
-                padding: 32px 24px;
-            }
-
-            .login-header h1 {
-                font-size: 26px;
-            }
-
-            .form-control {
-                padding: 12px 16px 12px 42px;
-                font-size: 14px;
-            }
-
-            .btn-submit {
-                padding: 14px;
-                font-size: 15px;
-            }
-        }
-
-        /* Loading Animation */
-        .btn-submit.loading {
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        .btn-submit.loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spinner 0.6s linear infinite;
-        }
-
-        @keyframes spinner {
-            to { transform: rotate(360deg); }
-        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
 <body>
-    <div class="login-wrapper">
-        <div class="login-container">
-            <!-- Left Panel - University Branding -->
-            <div class="branding-panel">
-                <div class="university-logo">
-                    @php
-                        $logo = url('assets/images/logo.jpg'); 
-                    @endphp
-                    <img src="{{ $logo }}" alt="Muni University Logo">
-                </div>
-                <div class="branding-content">
-                    <h2 class="university-name">
-                        Muni University
-                    </h2>
-                    <p class="system-tagline">EHRMS Portal</p>
-                    <p class="system-description">
-                        Electronic Human Resource Management System - 
-                        Streamlining workforce management and administrative excellence
-                    </p>
-                    <div class="feature-badges">
-                        <span class="badge"><i class="fas fa-users"></i> Employee Management</span>
-                        <span class="badge"><i class="fas fa-clock"></i> Attendance Tracking</span>
-                        <span class="badge"><i class="fas fa-calendar-check"></i> Leave Management</span>
-                        <span class="badge"><i class="fas fa-chart-line"></i> Analytics</span>
+    <aside class="brand">
+        <div class="mark">
+            <img src="{{ url('assets/brand/muni-crest.png') }}" alt="Muni University crest">
+            <div><b>Muni University</b><span>EHRMS Portal</span></div>
+        </div>
+        <div class="pitch">
+            <h1>Electronic Human Resource Management</h1>
+            <p>Attendance from the face-recognition terminals, leave from application to approval, and the reports that go with them.</p>
+            <ul class="caps">
+                <li>Attendance, punctuality and hours, day by day</li>
+                <li>Leave applied for, approved and tracked online</li>
+                <li>Reports for every department and faculty</li>
+            </ul>
+        </div>
+        <div class="legal"><span>&copy; {{ date('Y') }} Muni University</span><span>P.O. Box 725 Arua, Uganda</span></div>
+    </aside>
+
+    <main>
+        <div class="sheet">
+            <h2>Sign in</h2>
+            <p class="sub">Use the credentials issued to you by the ICT Office.</p>
+
+            <form action="{{ url('auth/login') }}" method="post" id="login-form" novalidate>
+                @csrf
+                @if ($errors->any())
+                    <div class="alert" role="alert">{{ $errors->first() }}</div>
+                @endif
+
+                <div class="field {{ $errors->has('username') ? 'invalid' : '' }}">
+                    <label for="username">Username or e-mail</label>
+                    <div class="control">
+                        <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="e.g. j.okello"
+                               autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
                     </div>
                 </div>
-            </div>
-
-            <!-- Right Panel - Login Form -->
-            <div class="login-panel">
-                <div class="login-header">
-                    <h1>Welcome Back</h1>
-                    <p>Sign in to access the EHRMS portal</p>
+                <div class="field {{ $errors->has('password') ? 'invalid' : '' }}">
+                    <label for="password">Password</label>
+                    <div class="control with-reveal">
+                        <input type="password" id="password" name="password" placeholder="Your password" autocomplete="current-password" required>
+                        <button type="button" class="reveal" aria-label="Show password" aria-pressed="false">Show</button>
+                    </div>
                 </div>
+                <div class="row">
+                    <label class="remember"><input type="checkbox" name="remember" value="1" checked> Keep me signed in</label>
+                    <a href="mailto:ict@muni.ac.ug?subject=EHRMS%20password%20reset">Forgot password?</a>
+                </div>
+                <button type="submit" class="submit">Sign in</button>
+            </form>
 
-                <form action="{{ url('auth/login') }}" method="post" class="login-form" autocomplete="off">
-                    @csrf
+            @if (!empty($demoAccounts))
+                <button type="button" class="try-demo" id="try-demo" aria-haspopup="dialog" aria-controls="demo-modal">
+                    <span class="ic" aria-hidden="true">D</span>
+                    <span><b>Try a demo account</b><span>{{ collect($demoAccounts)->flatten(1)->count() }} accounts, one for every role, with three months of data</span></span>
+                    <span class="go" aria-hidden="true">&rsaquo;</span>
+                </button>
+            @endif
 
-                    <div class="form-group {{ $errors->has('username') ? 'has-error' : '' }}">
-                        <label for="username" class="form-label">Username</label>
-                        <div class="input-wrapper">
-                            <input
-                                type="text"
-                                id="username"
-                                name="username"
-                                class="form-control"
-                                placeholder="Enter your username"
-                                value="{{ old('username') }}"
-                                required
-                                autofocus>
-                            <i class="fas fa-user input-icon"></i>
+            <p class="help">Trouble signing in? Contact <a href="mailto:ict@muni.ac.ug">ict@muni.ac.ug</a>.</p>
+        </div>
+    </main>
+
+    @if (!empty($demoAccounts))
+        <div class="dm" id="demo-modal" role="dialog" aria-modal="true" aria-labelledby="dm-title" hidden>
+            <div class="dm-box">
+                <div class="dm-head">
+                    <div>
+                        <h3 id="dm-title">Choose a demo account</h3>
+                        <p>A demonstration university with its own staff, attendance and leave: no real person or record is shown.
+                            Click an account to sign in. Password for all: <code>{{ $demoPassword }}</code></p>
+                    </div>
+                    <button type="button" class="dm-x" data-close aria-label="Close">&times;</button>
+                </div>
+                <div class="dm-body">
+                    @foreach ($demoAccounts as $group => $accounts)
+                        <div class="dm-group">
+                            <b>{{ $group }}</b>
+                            <div class="dm-grid">
+                                @foreach ($accounts as $a)
+                                    <button type="button" class="dm-acc" data-username="{{ $a['username'] }}">
+                                        <span class="av" aria-hidden="true">{{ $a['initials'] }}</span>
+                                        <span class="t">
+                                            <span class="n">{{ $a['name'] }}</span>
+                                            <span class="p">{{ $a['position'] }}{{ $a['department'] && strpos($a['position'], $a['department']) === false ? ' · ' . $a['department'] : '' }}</span>
+                                            <span class="u">{{ $a['username'] }}</span>
+                                        </span>
+                                    </button>
+                                @endforeach
+                            </div>
                         </div>
-                        @if ($errors->has('username'))
-                            @foreach ($errors->get('username') as $message)
-                                <span class="help-block">
-                                    <i class="fas fa-exclamation-circle"></i> {{ $message }}
-                                </span>
-                            @endforeach
-                        @endif
-                    </div>
-
-                    <div class="form-group {{ $errors->has('password') ? 'has-error' : '' }}">
-                        <label for="password" class="form-label">Password</label>
-                        <div class="input-wrapper">
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                class="form-control"
-                                placeholder="Enter your password"
-                                required>
-                            <i class="fas fa-lock input-icon"></i>
-                        </div>
-                        @if ($errors->has('password'))
-                            @foreach ($errors->get('password') as $message)
-                                <span class="help-block">
-                                    <i class="fas fa-exclamation-circle"></i> {{ $message }}
-                                </span>
-                            @endforeach
-                        @endif
-                    </div>
-
-                    <div class="remember-forgot">
-                        <label class="remember-me">
-                            <input type="checkbox" name="remember" value="1" checked>
-                            <span>Remember me</span>
-                        </label>
-                        {{-- <a href="#" class="forgot-password">Forgot password?</a> --}}
-                    </div>
-
-                    <button type="submit" class="btn-submit">
-                        Sign In
-                    </button>
-
-                    <div class="divider">
-                        <span>Secure Login</span>
-                    </div>
-
-                    <div class="support-info">
-                        <p>Need help accessing your account?</p>
-                        <a href="mailto:ict@muni.ac.ug"><i class="fas fa-envelope"></i> Contact IT Support</a>
-                    </div>
-                </form>
+                    @endforeach
+                </div>
+                <div class="dm-foot">Demo accounts can explore everything their role allows, but cannot change university-wide settings. The demo is reset regularly.</div>
             </div>
         </div>
-
-        <div class="footer-text">
-            &copy; {{ date('Y') }} Muni University. All Rights Reserved. | Powered by EHRMS
-        </div>
-    </div>
+    @endif
 
     <script>
-        // Add loading state to button on form submit
-        document.querySelector('.login-form').addEventListener('submit', function(e) {
-            const btn = this.querySelector('.btn-submit');
-            btn.classList.add('loading');
-            btn.textContent = 'Signing In...';
-        });
+        (function () {
+            var form = document.getElementById('login-form');
+            var username = form.querySelector('[name="username"]');
+            var password = form.querySelector('[name="password"]');
+            var submit = form.querySelector('.submit');
+            var reveal = form.querySelector('.reveal');
 
-        // Input focus animation
-        document.querySelectorAll('.form-control').forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.classList.add('focused');
+            reveal.addEventListener('click', function () {
+                var show = password.type === 'password';
+                password.type = show ? 'text' : 'password';
+                reveal.textContent = show ? 'Hide' : 'Show';
+                reveal.setAttribute('aria-pressed', String(show));
+                password.focus();
             });
-            input.addEventListener('blur', function() {
-                this.parentElement.classList.remove('focused');
+
+            // Demo accounts: a window listing them by role; one click signs in.
+            var modal = document.getElementById('demo-modal');
+            var opener = document.getElementById('try-demo');
+            if (modal && opener) {
+                var open = function () {
+                    modal.hidden = false;
+                    modal.classList.add('open');
+                    document.body.style.overflow = 'hidden';
+                    var first = modal.querySelector('.dm-acc');
+                    if (first) { first.focus(); }
+                };
+                var close = function () {
+                    modal.classList.remove('open');
+                    modal.hidden = true;
+                    document.body.style.overflow = '';
+                    opener.focus();
+                };
+                opener.addEventListener('click', open);
+                modal.addEventListener('click', function (e) {
+                    if (e.target === modal || e.target.closest('[data-close]')) { close(); }
+                    var acc = e.target.closest('.dm-acc');
+                    if (!acc) { return; }
+                    acc.classList.add('busy');
+                    acc.querySelector('.u').textContent = 'Signing in…';
+                    username.value = acc.dataset.username;
+                    password.value = {!! json_encode($demoPassword ?? '') !!};
+                    submit.classList.add('busy');
+                    form.submit();
+                });
+                document.addEventListener('keydown', function (e) {
+                    if (modal.hidden) { return; }
+                    if (e.key === 'Escape') { close(); }
+                    if (e.key === 'Tab') {
+                        var f = modal.querySelectorAll('button');
+                        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+                        else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+                    }
+                });
+            }
+
+            form.addEventListener('submit', function (e) {
+                if (!username.value.trim() || !password.value) {
+                    e.preventDefault();
+                    (username.value.trim() ? password : username).focus();
+                    return;
+                }
+                submit.classList.add('busy');
             });
-        });
+        })();
     </script>
 </body>
 </html>

@@ -23,25 +23,25 @@ class GeneralReportService
         try {
             // Mark as processing
             $report->update([
+                'status' => 'processing',
                 'is_generated' => 'No',
                 'file_path' => null,
             ]);
 
-            // Gather report data
-            $data = $this->gatherReportData($report);
-            
-            // Generate PDF
-            $filePath = $this->generatePDF($report, $data);
+            // Same figures and layout as the Reports page (App\Services\Reports).
+            [$view, $data, $orientation] = $this->buildReport($report);
+            $filePath = $this->savePdf($report, $view, $data, $orientation);
             
             // Calculate generation time
             $generationTime = round(microtime(true) - $startTime, 2);
             
             // Mark as completed
             $report->update([
+                'status' => 'completed',
                 'is_generated' => 'Yes',
                 'file_path' => $filePath,
-                'total_employees' => $data['stats']['total_employees'] ?? null,
-                'total_records' => $data['stats']['total_records'] ?? null,
+                'total_employees' => $data['summary']['people'] ?? null,
+                'total_records' => $data['summary']['working'] ?? null,
                 'generation_time' => $generationTime,
             ]);
 
@@ -60,6 +60,7 @@ class GeneralReportService
             ]);
 
             $report->update([
+                'status' => 'failed',
                 'is_generated' => 'No',
                 'error_message' => $e->getMessage(),
             ]);
@@ -219,7 +220,7 @@ class GeneralReportService
         $pdf->setPaper('a4', 'landscape');
         
         $fileName = 'reports/general-attendance-' . $report->id . '-' . time() . '.pdf';
-        $fullPath = public_path($fileName);
+        $fullPath = \App\Models\GeneralReport::storagePath($fileName);
         
         // Ensure directory exists
         $directory = dirname($fullPath);
@@ -244,7 +245,7 @@ class GeneralReportService
             abort(404, 'Report file not found or not yet generated.');
         }
 
-        $fullPath = public_path($report->file_path);
+        $fullPath = \App\Models\GeneralReport::storagePath($report->file_path);
         
         return response()->download($fullPath, 'General-Attendance-Report-' . $report->id . '.pdf', [
             'Content-Type' => 'application/pdf',
@@ -285,7 +286,8 @@ class GeneralReportService
      */
     protected function getFilteredUsers(GeneralReport $report)
     {
-        $query = User::where('status', 'Active');
+        // The older report module serves the real university only (demo accounts cannot open it).
+        $query = User::where('status', 'Active')->where('is_demo', false);
 
         // Filter based on report type
         switch ($report->report_type) {
@@ -310,5 +312,44 @@ class GeneralReportService
         }
 
         return $query->get();
+    }
+
+    /**
+     * The report's view and data, built exactly as on the Reports page.
+     *
+     * @return array{0:string, 1:array, 2:string}
+     */
+    protected function buildReport(GeneralReport $report): array
+    {
+        $from = Carbon::parse($report->start_date)->startOfDay();
+        $to = Carbon::parse($report->end_date)->startOfDay();
+
+        if ($report->report_type === 'user' && $report->target_user_id) {
+            $user = User::findOrFail($report->target_user_id);
+
+            return ['pdf.individual', \App\Services\Reports::individual($user, $from, $to), 'portrait'];
+        }
+        if ($report->report_type === 'department' && $report->target_department_id) {
+            $department = \App\Models\Department::findOrFail($report->target_department_id);
+            $ids = User::where('department_id', $department->id)->pluck('id')->all();
+
+            return ['pdf.summary', \App\Services\Reports::summary($department->name, $ids, $from, $to), 'landscape'];
+        }
+
+        return ['pdf.summary', \App\Services\Reports::summary('Whole university', null, $from, $to), 'landscape'];
+    }
+
+    protected function savePdf(GeneralReport $report, string $view, array $data, string $orientation): string
+    {
+        $creator = User::find($report->user_id);
+        $pdf = \App\Services\Reports::pdf($view, $data, $orientation, $creator ? $creator->displayName() : 'EHRMS');
+        $fileName = "reports/general-attendance-{$report->id}-" . time() . '.pdf';
+        $fullPath = \App\Models\GeneralReport::storagePath($fileName);
+        if (!is_dir(dirname($fullPath))) {
+            mkdir(dirname($fullPath), 0755, true);
+        }
+        $pdf->save($fullPath);
+
+        return $fileName;
     }
 }

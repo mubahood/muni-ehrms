@@ -278,16 +278,57 @@ class EventLog extends Model
             return false;
         }
 
-        // Try to find user by employee number (new column), then fallback to id or username
-        $user = User::where('employee_no', $this->employee_no)
-            ->orWhere('id', $this->employee_no)
-            ->orWhere('username', $this->employee_no)
-            ->first();
+        // The Terminal ID is the employee number. Demo accounts are never
+        // matched: their numbers exist only in the sandbox.
+        $user = User::where('employee_no', $this->employee_no)->where('is_demo', false)->first();
+
+        // Systems enrolled before employee numbers were recorded used the user
+        // id or username. That still matches, but only for people with no
+        // employee number of their own, and only when the name the terminal
+        // sends agrees with the person, so a terminal ID can never land on
+        // someone else (terminal "2" belonging to another person is refused).
+        if (!$user) {
+            $candidate = User::where('is_demo', false)
+                ->where(fn ($q) => $q->whereNull('employee_no')->orWhere('employee_no', ''))
+                ->where(fn ($q) => $q->where('id', $this->employee_no)->orWhere('username', $this->employee_no))
+                ->first();
+            if ($candidate && self::sameName($this->employee_name, $candidate)) {
+                $user = $candidate;
+            }
+        }
 
         if ($user) {
             $this->user_id = $user->id;
             $this->save();
             return $user;
+        }
+
+        return false;
+    }
+
+    /** Whether the name a terminal sent belongs to $user (no name sent counts as agreeing). */
+    public static function sameName(?string $terminalName, User $user): bool
+    {
+        $norm = fn ($v) => preg_replace('/[^a-z0-9]+/', ' ', strtolower(trim((string) $v)));
+        $sent = trim($norm($terminalName));
+        if ($sent === '') {
+            return true;
+        }
+        $known = array_filter(array_map(fn ($v) => trim($norm($v)), [
+            $user->name, $user->username, trim($user->first_name . ' ' . $user->last_name), trim($user->last_name . ' ' . $user->first_name),
+        ]));
+        foreach ($known as $k) {
+            if ($k === $sent) {
+                return true;
+            }
+            // Same words in any order ("NAKACWA BRENDA FAITH" = "Brenda Nakacwa Faith").
+            $a = explode(' ', $k);
+            $b = explode(' ', $sent);
+            sort($a);
+            sort($b);
+            if ($a === $b) {
+                return true;
+            }
         }
 
         return false;
@@ -329,6 +370,38 @@ class EventLog extends Model
     /**
      * Create EventLog from Hikvision raw event data
      */
+    /**
+     * The local time of a punch, corrected for a terminal whose clock or time
+     * zone is set wrongly.
+     *
+     * Terminals are in Kampala, so only the wall-clock part of the device time
+     * is used (its "+08:00"-style label is ignored). Punches are relayed within
+     * seconds, so when the device time differs from the moment the server
+     * received it by a whole number of hours (within 15 minutes), that gap is a
+     * clock/time-zone setting error and is taken off. A correctly set terminal
+     * gives a gap of 0 and is left untouched.
+     */
+    public static function deviceTimeToLocal($deviceTime, $receivedAt = null): Carbon
+    {
+        $wall = Carbon::parse(preg_replace('/(Z|[+-]\d{2}:?\d{2})$/', '', trim((string) $deviceTime)), config('app.timezone'));
+        $receivedAt = $receivedAt ? Carbon::parse($receivedAt, config('app.timezone')) : now();
+
+        $gap = $wall->getTimestamp() - $receivedAt->getTimestamp();
+        $hours = (int) round($gap / 3600);
+
+        if ($hours !== 0 && abs($hours) <= 14 && abs($gap - $hours * 3600) <= 900) {
+            if (\Illuminate\Support\Facades\Cache::add('device-clock-skew:' . $hours, 1, now()->addHours(6))) {
+                \Illuminate\Support\Facades\Log::warning("Terminal clock is {$hours} h off Kampala time; punch times are being corrected. Set the terminal's time zone to UTC+03:00.", [
+                    'device_time' => (string) $deviceTime,
+                    'received_at' => $receivedAt->toDateTimeString(),
+                ]);
+            }
+            return $wall->subHours($hours);
+        }
+
+        return $wall;
+    }
+
     public static function createFromHikvisionEvent(array $eventData, string $deviceSerial = null, string $source = 'webhook', string $batchId = null)
     {
         // Parse event time
@@ -337,9 +410,7 @@ class EventLog extends Model
         
         if ($eventTimeRaw) {
             try {
-                // Remove timezone info and parse
-                $cleanTime = preg_replace('/[+-]\d{2}:\d{2}$/', '', $eventTimeRaw);
-                $eventTime = Carbon::parse($cleanTime);
+                $eventTime = static::deviceTimeToLocal($eventTimeRaw);
             } catch (\Exception $e) {
                 $eventTime = null;
             }

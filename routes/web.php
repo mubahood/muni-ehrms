@@ -29,131 +29,18 @@ use Illuminate\Support\Facades\Route;
 use Sabberworm\CSS\Property\Import;
 
 // Event Log Processing Routes
-Route::get('process-event-logs', [EventLogController::class, 'processEventLogs']);
-Route::get('event-logs/statistics', [EventLogController::class, 'statistics']);
-Route::get('event-logs/process-page', [EventLogController::class, 'processPage']);
+Route::get('process-event-logs', [EventLogController::class, 'processEventLogs'])->middleware('admin.auth');
+Route::get('event-logs/statistics', [EventLogController::class, 'statistics'])->middleware('admin.auth');
+Route::get('event-logs/process-page', [EventLogController::class, 'processPage'])->middleware('admin.auth');
 
 // Report Generation API Routes
-Route::prefix('api/reports')->group(function () {
+Route::prefix('api/reports')->middleware('admin.auth')->group(function () {
     Route::post('generate', [ReportGenerationController::class, 'generateGeneralReport']);
     Route::get('download/{id}', [ReportGenerationController::class, 'downloadReport']);
     Route::get('statistics/{id}', [ReportGenerationController::class, 'getStatistics']);
     Route::post('regenerate/{id}', [ReportGenerationController::class, 'regenerateReport']);
 });
 
-Route::get('import-employees', function (Request $r) {
-
-    $employees = [
-        ["name" => "KHALFAN HANAN MUTASIM", "phone" => "0771665405"],
-        ["name" => "BRENDA NAKACWA FAITH", "phone" => "0707902006"],
-        ["name" => "KATENDE KARIM", "phone" => "0759019192"],
-        ["name" => "MUTAWE ABU BAKAR", "phone" => "0757769707"],
-        ["name" => "MAKHUWA ABDUL WAHAB", "phone" => "0708454691"],
-        ["name" => "NAKAMYA CLAIRE", "phone" => "0756224819"],
-        ["name" => "NGONI ABU BAKAR SALIM", "phone" => "0752629977"],
-        ["name" => "MUKABALISA HOPE", "phone" => "0782690090"],
-        ["name" => "NAKAWEESA RAHMAH", "phone" => "0703197127"],
-        ["name" => "NAKINTU JACKLINE", "phone" => "0753502945"],
-        ["name" => "AINEOMUGISHA WALID", "phone" => "0703076464"],
-        ["name" => "GWITABINGI LYDIA", "phone" => "0751813958"],
-        ["name" => "MARYAMO SULEIMAN M", "phone" => "0740158977"],
-        ["name" => "MULINDWA CALEB", "phone" => "0758948739"],
-        ["name" => "MAHA MOHAMMED SALIH", "phone" => "0782112268"],
-        ["name" => "NAFULA DAPHINE", "phone" => "0760346145"],
-        ["name" => "MUSOKE MUHAMMED", "phone" => "0751644283"],
-        ["name" => "NAKAYEMBA FAITH", "phone" => "0757821175"],
-        ["name" => "NDAGIRE JACKIE", "phone" => "0709855563"],
-        ["name" => "SSANSA MARVIN", "phone" => "0703395774"],
-        ["name" => "KWIRINGIRA AMOS DAVID", "phone" => "0752561298"],
-        ["name" => "MUGWIRE JACKSON", "phone" => "0705180599"],
-        ["name" => "NYOMBI BRIAN", "phone" => "0704830199"],
-        ["name" => "SENGO ALI", "phone" => "0759638324"],
-        ["name" => "KIMBUGWE ELIJAH AVIAS", "phone" => "0753597601"],
-        ["name" => "ALOWOOZA MARIAM N", "phone" => "0778970225"],
-        ["name" => "KASAIJA ARAALI", "phone" => "0704572789"],
-        ["name" => "NAGASHA PATRICIA", "phone" => "0757400481"],
-        ["name" => "SSEKITTO ABDALLAH", "phone" => "0741061562"],
-        ["name" => "FARDOWSA ABDI HUSSEIN", "phone" => "0750131429"],
-        ["name" => "ZAKAIRE AHAMED M", "phone" => "0702038557"],
-        ["name" => "ASIIMWE HAAWA", "phone" => "0778988252"],
-        ["name" => "MWESIGWA BASIR", "phone" => "0703809923"],
-        ["name" => "YASMIN SAID MOHAMUD", "phone" => "0702060308"],
-        ["name" => "AISHA MOHAMMED", "phone" => "0705149918"],
-        ["name" => "KASIRIVU HUSSEIN ALI", "phone" => "0702315060"],
-        ["name" => "ABDINASIR YUSSUF ABDILLE", "phone" => "0780689838"],
-        ["name" => "SUDI ABDI AHMED", "phone" => "0750955812"],
-        ["name" => "ABDIRAHIM NOR WARSAME", "phone" => "0767818241"],
-        ["name" => "NAMWANJE SHAMIM", "phone" => "—"],
-    ];
-
-
-
-    $id = 0;
-    foreach ($employees as $key => $employee) {
-        $id++;
-        $user = User::find($id);
-        if ($user == null) {
-            $user = new User();
-            $user->id = $id;
-        }
-        $user->name = $employee['name'];
-        $user->username = $employee['name'];
-        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        $user->work_days = $days;
-        $user->password = bcrypt('password'); // Default password
-        $nameParts = explode(' ', $employee['name'], 2);
-        $user->first_name = $nameParts[0];
-        $user->last_name = isset($nameParts[1]) ? $nameParts[1] : '';
-        $user->reg_date = now();
-        $user->last_seen = now();
-        $user->email = null;
-        $user->approved = 1;
-        $user->profile_photo = null;
-        $user->user_type = 'employee';
-        $user->sex = null;
-        $user->reg_number = null;
-        $user->country = null;
-        $user->occupation = null;
-        $user->profile_photo_large = null;
-        $user->phone_number = $employee['phone'];
-        $user->location_lat = null;
-        $user->location_long = null;
-        $user->facebook = null;
-        $user->twitter = null;
-        $user->whatsapp = null;
-        $user->linkedin = null;
-        $user->website = null;
-        $user->other_link = null;
-        $user->cv = null;
-        $user->language = null;
-        $user->about = null;
-        $user->address = null;
-        $user->created_at = now();
-        $user->updated_at = now();
-        $user->remember_token = null;
-        $user->avatar = null;
-        $user->campus_id = '1';
-        $user->complete_profile = 0;
-        $user->title = null;
-        $user->dob = null;
-        $user->intro = null;
-        $user->is_mail_verified = 0;
-        $user->mail_verification_token = null;
-        $user->mail_verification_time = null;
-        $user->is_mail_verification_code_sent = 0;
-        $user->department_id = null;
-        $user->company_id = 1;
-        $user->change_password = 0;
-        $user->has_changed_password = 0;
-        $user->notify_account_created_by_email = 0;
-        $user->position = null;
-        $user->status = 'Active';
-        $user->start_working_date = now();
-        $user->hours = 0;
-        $user->save();
-        echo "User {$user->id} - {$user->name} imported successfully.<br>";
-    }
-});
 Route::get('do-import-attendance-records', function (Request $r) {
     /*  $allUsers = User::all();
     if ($allUsers->count() == 0) {
@@ -441,75 +328,15 @@ Route::get('do-import-attendance-records', function (Request $r) {
     } else {
         echo "<p>No new attendance records imported.</p>";
     }
-});
+})->middleware('admin.auth');
 
 
-Route::get('download-user-form-data', function (Request $request) {
-    $activeUsers = User::where('status', 'Active')->get();
-    $file_Nmae = 'Employee Form.xls';
-
-    $header = [
-        'ID',
-        'Name',
-        'Department',
-        'Authority',
-    ];
-
-    $data = [];
-    $i = 0;
-    for ($i = 0; $i < 7; $i++) {
-        $data[] = []; // Add empty rows for the first 8 rows
-    }
-    $data[] = $header; // Add header row
-    $isFirstRow = true;
-    foreach ($activeUsers as $user) {
-        $isAdmin = '0';
-        if ($user->isRole('admin')) {
-            $isAdmin = 1;
-        }
-        if ($isFirstRow) {
-            $isFirstRow = false;
-            $isAdmin = 1; // Set first row as non-admin
-        }
-        $data[] = [
-            $user->id,
-            $user->name,
-            1,
-            $isAdmin,
-        ];
-    }
-    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-    $sheet->fromArray($data, null, 'A1');
-    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-    $filePath = public_path($file_Nmae);
-    $writer->save($filePath);
-    return response()->download($filePath)->deleteFileAfterSend(true);
-});
 
 // General Reports Routes - Using Dedicated Controller
-Route::get('print-general-reports', [GeneralReportPrintController::class, 'generate'])->name('general-reports.generate');
-Route::get('print-general-reports/print', [GeneralReportPrintController::class, 'view'])->name('general-reports.view');
+Route::get('print-general-reports', [GeneralReportPrintController::class, 'generate'])->name('general-reports.generate')->middleware('admin.auth');
+Route::get('print-general-reports/print', [GeneralReportPrintController::class, 'view'])->name('general-reports.view')->middleware('admin.auth');
 
-Route::get('send-new-password', function (Request $r) {
-    //send new password to user
-    $user = User::find($r->user_id);
-    if ($user == null) {
-        dd("User not found.");
-    }
-    try {
-        $user->sendWelcomeMessage();
-    } catch (\Exception $e) {
-        return "Error sending new password: " . $e->getMessage();
-    }
-    dd("New password sent to user: " . $user->email);
-});
 
-Route::get('generate-attendance-records', function (Request $r) {
-    $output = Utils::generate_attendance_records();
-
-    return $output;
-});
 
 
 
@@ -618,10 +445,13 @@ Route::get('import-user-data', function (Request $r) {
     echo "<p>Failed Imports: $errorCount</p>";
     echo "<p>Check the logs for more details.</p>";
     return;
-});
+})->middleware('admin.auth');
 
 Route::get('auth/login', function () {
-    return view('auth/login');
+    return view('auth/login', [
+        'demoAccounts' => \App\Admin\Controllers\AuthController::demoAccounts(),
+        'demoPassword' => config('demo.password'),
+    ]);
 });
 
 Route::post('auth/login', 'App\Admin\Controllers\AuthController@postLogin');
@@ -646,13 +476,6 @@ Route::get('print-gatepass', function (Request $request) {
         'item' => $item
     ]));
     return $pdf->stream();
-});
+})->middleware('admin.auth');
 
 
-//endpoint for migration
-Route::get('migrate', function () {
-    //artisan migrate
-    Artisan::call('migrate', ['--force' => true]);
-    $output = Artisan::output();
-    return nl2br($output);
-});

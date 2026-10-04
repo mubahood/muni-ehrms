@@ -19,7 +19,7 @@
     <hr>
     <!-- Footer -->
     <div class="footer text-center" {{-- style="border-top: 2px solid  #AB7602" --}}>
-        <p style="color: rgb(0, 0, 50);">© {{ date('Y') }} {{ env('APP_NAME') }}. All rights reserved.</p>
+        <p style="color: rgb(0, 0, 50);">© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
     </div>
     </div>
 @endsection

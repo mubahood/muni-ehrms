@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\EventLog;
+use App\Support\WebhookAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -16,16 +17,7 @@ class WebhookController extends Controller
      */
     public function receiveEvents(Request $request)
     {
-        // Validate webhook token - support both X-API-Key and X-Webhook-Token
-        $token = $request->header('X-API-Key') ?? $request->header('X-Webhook-Token') ?? $request->input('token');
-        $expectedToken = env('HIKVISION_WEBHOOK_TOKEN', config('app.webhook_token'));
-        
-        if ($token !== $expectedToken) {
-            Log::warning('Invalid webhook token attempt', [
-                'ip' => $request->ip(),
-                'provided_token' => $token,
-            ]);
-            
+        if (!WebhookAuth::accepts($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized: Invalid webhook token',
@@ -199,7 +191,7 @@ class WebhookController extends Controller
                 }
 
                 // Parse event time
-                $eventTimeParsed = \Carbon\Carbon::parse($eventTime);
+                $eventTimeParsed = EventLog::deviceTimeToLocal($eventTime);
                 
                 // Get additional fields
                 $temperature = $eventData['temperature'] 
@@ -221,6 +213,7 @@ class WebhookController extends Controller
                     'employee_no' => $employeeNo,
                     'employee_name' => $employeeName,
                     'event_time' => $eventTimeParsed,
+                    'event_time_raw' => is_string($eventTime) ? $eventTime : null,
                     'door_no' => $doorName,
                     'major' => $major,
                     'minor' => $minor,

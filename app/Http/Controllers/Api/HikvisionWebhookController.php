@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\EventLog;
 use App\Models\User;
 use App\Models\AttendanceRecord;
+use App\Support\WebhookAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -19,15 +20,7 @@ class HikvisionWebhookController extends Controller
      */
     protected function validateToken(Request $request): bool
     {
-        $token = $request->header('X-Webhook-Token') ?? $request->bearerToken();
-        $expectedToken = config('services.hikvision.webhook_token') ?? env('HIKVISION_WEBHOOK_TOKEN');
-        
-        if (empty($expectedToken)) {
-            Log::warning('Hikvision webhook: HIKVISION_WEBHOOK_TOKEN not configured');
-            return false;
-        }
-        
-        return hash_equals($expectedToken, $token ?? '');
+        return WebhookAuth::accepts($request);
     }
 
     /**
@@ -39,9 +32,6 @@ class HikvisionWebhookController extends Controller
     {
         // Validate token
         if (!$this->validateToken($request)) {
-            Log::warning('Hikvision webhook: Invalid token', [
-                'ip' => $request->ip(),
-            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized',
@@ -141,9 +131,6 @@ class HikvisionWebhookController extends Controller
     {
         // Validate token
         if (!$this->validateToken($request)) {
-            Log::warning('Hikvision webhook: Invalid token for batch', [
-                'ip' => $request->ip(),
-            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized',
@@ -262,7 +249,8 @@ class HikvisionWebhookController extends Controller
     }
 
     /**
-     * Auto-link event to user based on employee_no
+     * Link the event to a person by their employee number (Terminal ID).
+     * Uses the same matching as every other path; see EventLog::linkUser().
      */
     protected function autoLinkUser(EventLog $eventLog): bool
     {
@@ -270,80 +258,16 @@ class HikvisionWebhookController extends Controller
             return false;
         }
 
-        // Try to find user by employee_no (check multiple possible columns)
-        $user = User::where('employee_no', $eventLog->employee_no)
-            ->orWhere('staff_id', $eventLog->employee_no)
-            ->orWhere('badge_number', $eventLog->employee_no)
-            ->first();
-
-        if ($user) {
-            $eventLog->linkUser($user);
-            return true;
-        }
-
-        return false;
+        return (bool) $eventLog->linkUser();
     }
 
     /**
-     * Process event to attendance record
-     * This is optional and can be customized based on business logic
+     * Turn the event into attendance. Delegates to the shared service so this
+     * endpoint follows exactly the same rules as the bridge and the scheduler.
      */
     protected function processEventToAttendance(EventLog $eventLog): bool
     {
-        try {
-            // Skip if no user linked
-            if (!$eventLog->user_id) {
-                $eventLog->markAsFailed('No user linked to this employee number');
-                return false;
-            }
-
-            // Skip if event type is not access granted (major=5, minor=75)
-            // Customize this based on your device configuration
-            if ($eventLog->major != 5 || !in_array($eventLog->minor, [75, 76, 77])) {
-                $eventLog->markAsSkipped('Event type not applicable for attendance');
-                return false;
-            }
-
-            $eventDate = Carbon::parse($eventLog->event_time)->toDateString();
-            $eventTime = Carbon::parse($eventLog->event_time)->format('H:i:s');
-
-            // Check if attendance record exists for this date
-            $attendance = AttendanceRecord::where('user_id', $eventLog->user_id)
-                ->whereDate('date', $eventDate)
-                ->first();
-
-            if ($attendance) {
-                // Update clock out time if later than existing
-                if (!$attendance->clock_out_time || $eventTime > $attendance->clock_out_time) {
-                    $attendance->update([
-                        'clock_out_time' => $eventTime,
-                        'source' => 'hikvision',
-                    ]);
-                }
-            } else {
-                // Create new attendance record
-                $attendance = AttendanceRecord::create([
-                    'user_id' => $eventLog->user_id,
-                    'date' => $eventDate,
-                    'clock_in_time' => $eventTime,
-                    'source' => 'hikvision',
-                ]);
-            }
-
-            // Link attendance record to event
-            $eventLog->update(['attendance_record_id' => $attendance->id]);
-            $eventLog->markAsProcessed();
-
-            return true;
-
-        } catch (\Exception $e) {
-            $eventLog->markAsFailed($e->getMessage());
-            Log::error('Failed to process event to attendance', [
-                'event_id' => $eventLog->id,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
+        return app(\App\Services\AttendanceProcessingService::class)->processEventToAttendance($eventLog);
     }
 
     /**

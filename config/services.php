@@ -30,4 +30,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'hikvision' => [
+        'webhook_token' => env('HIKVISION_WEBHOOK_TOKEN'),
+        // Extra tokens still accepted (comma separated), e.g. a bridge not yet updated.
+        'accepted_tokens' => env('HIKVISION_WEBHOOK_TOKENS_ACCEPTED', ''),
+    ],
+
 ];

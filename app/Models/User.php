@@ -20,47 +20,40 @@ class User extends Administrator implements JWTSubject
     use HasApiTokens, HasFactory, Notifiable;
     protected $table = 'users';
 
+    protected $hidden = ['password', 'remember_token', 'mail_verification_token'];
+
+    protected $casts = [
+        'is_demo' => 'boolean',
+        'must_change_password' => 'boolean',
+        'password_changed_at' => 'datetime',
+    ];
+
+    /** An account of the demonstration university (see App\Services\Scope). */
+    public function isDemo(): bool
+    {
+        return (bool) $this->is_demo;
+    }
+
     use HasFactory;
     use Notifiable;
 
-    //is available on this day
+    /**
+     * Whether this person is expected at work on $day: active, already started,
+     * one of their working days, not a public holiday, and not on leave that is
+     * in force (approved, or recalled after they resumed).
+     */
     public function isAvailableOnDay($day)
     {
-        $day = strtolower($day);
-        $parsed_date = Carbon::parse($day);
-        if (!$parsed_date) {
-            return false; // Invalid date format
+        $date = Carbon::parse($day)->startOfDay();
+        $engine = app(\App\Services\AttendanceEngine::class);
+        if (!$engine->isExpected($this, $date)) {
+            return false;
         }
-        if ($this->status != 'Active') {
-            return false; // User is not active
-        }
-
-        if ($this->start_working_date != null && strlen($this->start_working_date) > 5) {
-            $start_working_date = Carbon::parse($this->start_working_date);
-            if ($parsed_date->lt($start_working_date)) {
-                return false; // User has not started working yet
-            }
+        if (!(new \App\Services\WorkCalendar($date, $date))->isWorkingDayFor($this, $date)) {
+            return false;
         }
 
-        $days_of_work = $this->work_days;
-
-        $day_of_week = $parsed_date->format('l'); // Get the day of the week (e.g., 'Monday', 'Tuesday', etc.)
-
-        //check if $day_of_week not in $days_of_work
-        if (!is_array($days_of_work) || !in_array($day_of_week, $days_of_work)) {
-            return false; // Day of the week is not in the user's work days
-        }
-
-
-        //see if has leave on this day
-        $leave = Leave::where('user_id', $this->id)
-            ->where('start_date', '<=', $parsed_date)
-            ->where('end_date', '>=', $parsed_date)
-            ->first();
-        if ($leave) {
-            return false; // User has leave on this day
-        }
-        return true; // User is available on this day 
+        return !Leave::inForceOn($date)->where('user_id', $this->id)->exists();
     }
 
 
@@ -74,7 +67,7 @@ class User extends Administrator implements JWTSubject
         $this->save();
 
         $url = url('verification-mail-verify?tok=' . $mail_verification_token);
-        $from = env('APP_NAME') . " Team.";
+        $from = config('app.name') . " Team.";
 
         $mail_body =
             <<<EOD
@@ -93,7 +86,7 @@ class User extends Administrator implements JWTSubject
             $data['data'] = $data['body'];
             $data['name'] = $this->name;
             $data['email'] = $this->email;
-            $data['subject'] = 'Email Verification - ' . env('APP_NAME') . ' - ' . $day . ".";
+            $data['subject'] = 'Email Verification - ' . config('app.name') . ' - ' . $day . ".";
             Utils::mail_sender($data);
         } catch (\Throwable $th) {
             throw $th;
@@ -149,8 +142,8 @@ class User extends Administrator implements JWTSubject
         $user->password = password_hash($newPassword, PASSWORD_BCRYPT);
         $user->save();
         //send email
-        $APP_NAME = env('APP_NAME', 'Vehcle Management System');
-        $subject = "Welcome to " . env('APP_NAME') . " - Your Account Details";
+        $APP_NAME = config('app.name');
+        $subject = "Welcome to " . config('app.name') . " - Your Account Details";
         $LOGIN_URL = admin_url();
         $message = <<<HTML
                     <h3>Hello {$user->name},</h3>
@@ -237,5 +230,127 @@ class User extends Administrator implements JWTSubject
     public function targetedReports()
     {
         return $this->hasMany(GeneralReport::class, 'target_user_id');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Roles
+    |--------------------------------------------------------------------------
+    | Slugs are the laravel-admin role slugs, listed from most to least
+    | authority: a person holding several roles is described by the first.
+    */
+
+    public const ROLE_LABELS = [
+        'admin' => 'System Administrator',
+        'us' => 'University Secretary',
+        'hr' => 'Human Resource',
+        'dean' => 'Faculty Dean',
+        'hod' => 'Head of Department',
+        'employee' => 'Employee',
+    ];
+
+    /** @return string[] role slugs this user holds */
+    public function roleSlugs(): array
+    {
+        return $this->roles->pluck('slug')->all();
+    }
+
+    public function hasAnyRole(string ...$slugs): bool
+    {
+        return (bool) array_intersect($slugs, $this->roleSlugs());
+    }
+
+    /** The highest role held; every signed-in person is at least an employee. */
+    public function primaryRole(): string
+    {
+        $held = $this->roleSlugs();
+        foreach (array_keys(self::ROLE_LABELS) as $slug) {
+            if (in_array($slug, $held, true)) {
+                return $slug;
+            }
+        }
+
+        return 'employee';
+    }
+
+    public function roleLabel(): string
+    {
+        return self::ROLE_LABELS[$this->primaryRole()];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Organisation
+    |--------------------------------------------------------------------------
+    */
+
+    /** Departments this person heads (set on the department). */
+    public function headedDepartments()
+    {
+        return $this->hasMany(Department::class, 'hod_id');
+    }
+
+    /** Faculties this person is Dean of (set on the faculty). */
+    public function deanOfFaculties()
+    {
+        return $this->hasMany(Faculty::class, 'dean_id');
+    }
+
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class, 'user_id');
+    }
+
+    public function leaveEntitlements()
+    {
+        return $this->hasMany(LeaveEntitlement::class, 'user_id');
+    }
+
+    /**
+     * ISO weekday numbers this person is expected at work: their own work days
+     * if set on the staff record, otherwise the institution's working days.
+     *
+     * @return int[]
+     */
+    public function expectedWeekdays(): array
+    {
+        $numbers = [
+            'monday' => 1, 'tuesday' => 2, 'wednesday' => 3, 'thursday' => 4,
+            'friday' => 5, 'saturday' => 6, 'sunday' => 7,
+        ];
+        $own = [];
+        foreach ($this->work_days as $day) {
+            $key = strtolower(trim((string) $day));
+            if (isset($numbers[$key])) {
+                $own[] = $numbers[$key];
+            }
+        }
+
+        return $own ?: SystemConfiguration::current()->workingWeekdays();
+    }
+
+    /** Late from the first minute after this time. */
+    public function lateTime(): string
+    {
+        return $this->custom_late_time ?: SystemConfiguration::current()->defaultLateTime();
+    }
+
+    public function displayName(): string
+    {
+        $name = trim((string) $this->name);
+        if ($name === '') {
+            $name = trim($this->first_name . ' ' . $this->last_name);
+        }
+
+        return $name !== '' ? $name : (string) $this->username;
+    }
+
+    public function initials(): string
+    {
+        $parts = preg_split('/\s+/', $this->displayName());
+        $first = mb_substr($parts[0] ?? '', 0, 1);
+        $last = count($parts) > 1 ? mb_substr(end($parts), 0, 1) : '';
+
+        return mb_strtoupper($first . $last) ?: '?';
     }
 }

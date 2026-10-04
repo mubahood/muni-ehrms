@@ -31,8 +31,9 @@ class EventLogController extends AdminController
     {
         $grid = new Grid(new EventLog());
 
-        // Default sorting - newest first
-        $grid->model()->orderBy('event_time', 'desc');
+        // Default sorting - newest first. Terminal data only: the demo sandbox's
+        // simulated captures are not shown here.
+        $grid->model()->where(fn ($q) => $q->whereNull('source')->orWhere('source', '!=', \App\Support\DemoManifest::EVENT_SOURCE))->orderBy('event_time', 'desc');
 
         // Disable create - events come from webhook
         $grid->disableCreateButton();

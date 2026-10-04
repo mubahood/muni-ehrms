@@ -1,0 +1,2 @@
+/* Muni University skin. laravel-admin loads this file for config('admin.skin') = 'skin-muni'.
+   The house style itself lives in public/css/ehrms.css (loaded from app/Admin/bootstrap.php). */

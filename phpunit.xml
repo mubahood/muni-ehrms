@@ -21,6 +21,11 @@
         <server name="APP_ENV" value="testing"/>
         <server name="BCRYPT_ROUNDS" value="4"/>
         <server name="CACHE_DRIVER" value="array"/>
+        <!-- Tests run in their own database, cloned from the live schema by scripts/refresh-test-db.sh -->
+        <server name="DB_DATABASE" value="muni_ehrms_test"/>
+        <server name="NOTIFY_EMAIL" value="false"/>
+        <!-- The app lives in a sub-folder locally; the test client needs a root URL -->
+        <server name="APP_URL" value="http://localhost"/>
         <!-- <server name="DB_CONNECTION" value="sqlite"/> -->
         <!-- <server name="DB_DATABASE" value=":memory:"/> -->
         <server name="MAIL_MAILER" value="array"/>

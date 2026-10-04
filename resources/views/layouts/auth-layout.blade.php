@@ -138,7 +138,7 @@
             <hr>
 
             <p class="login-box-msg text-uppercase p-0 m-0">
-                {{ env('APP_NAME') }}
+                {{ config('app.name') }}
             </p>
 
 
@@ -146,7 +146,7 @@
 
 
             <div class="footer">
-                <p>© {{ date('Y') }} {{ env('APP_NAME') }}. All rights reserved.</p>
+                <p>© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
             </div>
         </div>
     </div>

@@ -301,12 +301,10 @@ class ApiResurceController extends Controller
         if ($is_private) {
 
             $u = auth('api')->user();
-            $administrator_id = $u->id;
-
             if ($u == null) {
                 return $this->error('User not found.');
             }
-            $conditions['administrator_id'] = $administrator_id;
+            $conditions['administrator_id'] = $u->id;
         }
 
         $items = [];

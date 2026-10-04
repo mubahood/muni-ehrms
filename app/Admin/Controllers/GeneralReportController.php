@@ -99,8 +99,8 @@ class GeneralReportController extends AdminController
         })->sortable();
         
         $grid->column('file_path', __('File'))->display(function ($path) {
-            if ($path && file_exists(public_path($path))) {
-                $size = filesize(public_path($path));
+            if ($path && file_exists(\App\Models\GeneralReport::storagePath($path))) {
+                $size = filesize(\App\Models\GeneralReport::storagePath($path));
                 $units = ['B', 'KB', 'MB', 'GB'];
                 for ($i = 0; $size > 1024; $i++) {
                     $size /= 1024;
@@ -127,8 +127,8 @@ class GeneralReportController extends AdminController
             }
             
             // View PDF button (only if generated)
-            if ($this->is_generated === 'Yes' && !empty($this->file_path) && file_exists(public_path($this->file_path))) {
-                $viewUrl = url($this->file_path);
+            if ($this->is_generated === 'Yes' && !empty($this->file_path) && file_exists(\App\Models\GeneralReport::storagePath($this->file_path))) {
+                $viewUrl = admin_url('general-reports/' . $this->id . '/file');
                 $buttons .= "<a target='_blank' href='{$viewUrl}' class='btn btn-xs btn-success'>
                     <i class='fa fa-file-pdf-o'></i> View PDF
                 </a>";
@@ -239,5 +239,19 @@ class GeneralReportController extends AdminController
         });
 
         return $form;
+    }
+
+    /**
+     * A generated PDF, for signed-in managers only. The files sit in
+     * public/reports, which refuses direct requests (see its .htaccess).
+     */
+    public function file($id)
+    {
+        $report = \App\Models\GeneralReport::findOrFail($id);
+        $path = $report->file_path ? \App\Models\GeneralReport::storagePath($report->file_path) : null;
+        abort_unless($path && is_file($path) && strpos(realpath($path), realpath(storage_path('app/reports'))) === 0, 404);
+        \App\Services\Audit::log('report.downloaded', 'Earlier general report #' . $report->id);
+
+        return response()->file($path, ['Content-Type' => 'application/pdf']);
     }
 }

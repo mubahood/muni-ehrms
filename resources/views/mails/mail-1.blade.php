@@ -9,7 +9,7 @@ if (!isset($body)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ env('APP_NAME') }}</title>
+    <title>{{ config('app.name') }}</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
@@ -80,7 +80,7 @@ if (!isset($body)) {
     <div class="email-container" style="background-color: #f7efdd;">
         <!-- Header -->
         <div class="footer" {{-- style="border-bottom: 2px solid  #AB7602" --}}>
-            <h2 style="color: rgb(0, 0, 50);" class="my-title">{{ env('APP_NAME') }}</h2>
+            <h2 style="color: rgb(0, 0, 50);" class="my-title">{{ config('app.name') }}</h2>
         </div>
         <div class="my-hr" style="border: 3px solid  black"></div>
 

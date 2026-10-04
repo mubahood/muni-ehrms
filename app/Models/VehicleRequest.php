@@ -49,7 +49,7 @@ class VehicleRequest extends Model
                 $data['data'] = $mail_body;
                 $data['name'] = $head_of_department->name;
                 $data['email'] = $head_of_department->email;
-                $data['subject'] = 'HOD Review - ' . env('APP_NAME') . ' - ' . $day . ".";
+                $data['subject'] = 'HOD Review - ' . config('app.name') . ' - ' . $day . ".";
                 $data['title'] = $title;
                 Utils::mail_sender($data);
                 $sql = "UPDATE vehicle_requests SET mail_sent_to_hod = 'Yes' WHERE id = {$model->id}";
@@ -89,7 +89,7 @@ class VehicleRequest extends Model
                 $data['data'] = $mail_body;
                 $data['name'] = 'General Manager';
                 $data['email'] = $gm_mail;
-                $data['subject'] = 'GM Review - ' . env('APP_NAME') . ' - ' . $day . ".";
+                $data['subject'] = 'GM Review - ' . config('app.name') . ' - ' . $day . ".";
                 $data['title'] = $title;
                 Utils::mail_sender($data);
                 $sql = "UPDATE vehicle_requests SET mail_sent_to_gm = 'Yes' WHERE id = {$model->id}";
@@ -126,7 +126,7 @@ class VehicleRequest extends Model
                 $data['data'] = $mail_body;
                 $data['name'] = $applicant->name;
                 $data['email'] = $applicant_mail;
-                $data['subject'] = 'GM Approval - ' . env('APP_NAME') . ' - ' . $day . ".";
+                $data['subject'] = 'GM Approval - ' . config('app.name') . ' - ' . $day . ".";
                 $data['title'] = $title;
                 Utils::mail_sender($data);
                 $sql = "UPDATE vehicle_requests SET mail_sent_to_applicant_on_gm_approval = 'Yes' WHERE id = {$model->id}";
@@ -163,7 +163,7 @@ class VehicleRequest extends Model
                 $data['data'] = $mail_body;
                 $data['name'] = $applicant->name;
                 $data['email'] = $applicant_mail;
-                $data['subject'] = 'HOD Rejection - ' . env('APP_NAME') . ' - ' . $day . ".";
+                $data['subject'] = 'HOD Rejection - ' . config('app.name') . ' - ' . $day . ".";
                 $data['title'] = $title;
                 Utils::mail_sender($data);
                 $sql = "UPDATE vehicle_requests SET mail_sent_to_applicant_on_hod_approval = 'Yes' WHERE id = {$model->id}";
@@ -199,7 +199,7 @@ class VehicleRequest extends Model
                 $data['data'] = $mail_body;
                 $data['name'] = $applicant->name;
                 $data['email'] = $applicant_mail;
-                $data['subject'] = 'GM Rejection - ' . env('APP_NAME') . ' - ' . $day . ".";
+                $data['subject'] = 'GM Rejection - ' . config('app.name') . ' - ' . $day . ".";
                 $data['title'] = $title;
                 Utils::mail_sender($data);
                 $sql = "UPDATE vehicle_requests SET mail_sent_to_applicant_on_security_exit_approval = 'Yes' WHERE id = {$model->id}";

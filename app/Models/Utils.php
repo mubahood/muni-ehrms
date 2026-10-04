@@ -51,110 +51,20 @@ class Utils extends Model
         return response()->download($file_name)->deleteFileAfterSend(true);
     }
 
+    /**
+     * Bring this month's attendance up to date (absences and "not in yet"
+     * for today included). Kept under its old name for existing callers; the
+     * work is done by the attendance engine.
+     *
+     * @return int number of days processed
+     */
     public static function generate_attendance_records()
     {
-
-        //set unlimited memory and time
-        ini_set('memory_limit', '-1');
         set_time_limit(0);
-        //get all users
-        $users = User::where('status', 'Active')->get();
-        if ($users == null || $users->count() < 1) {
-            throw new \Exception("No active users found.");
-        }
 
-        $today = Carbon::now();
-        //month start date
-        $month_start = $today->copy()->startOfMonth();
-        $month_end = $today->copy()->endOfMonth();
-        $config = SystemConfiguration::where([])->first();
-        if ($config == null) {
-            throw new \Exception("System configuration not found.");
-        }
-
-        //validate start date
-        if (!isset($config->start_date) || empty($config->start_date)) {
-            throw new \Exception("Start date not set in system configuration.");
-        }
-
-        $start_date = Carbon::parse($config->start_date);
-        if ($start_date == null) {
-            throw new \Exception("Start date not set in system configuration.");
-        }
-
-        //loop through each day of the month
-        $output = [];
-        $today = Carbon::now();
-        $tomorrow = $today->copy()->addDay();
-        $done_dates = [];
-
-
-        for ($date = $month_start->copy(); $date->lte($month_end); $date->addDay()) {
-            if (in_array($date->toDateString(), $done_dates)) {
-                continue; // Skip if the date has already been processed
-            }
-            $done_dates[] = $date->toDateString(); // Mark this date as processed
-            //if today, break the loop
-            if ($date->isToday()) {
-                break; // Stop if the date is today
-            }
-        }
-
-
-        foreach ($done_dates as $done_date) {
-            $date = Carbon::parse($done_date);
-            if ($date->gt($tomorrow)) {
-                break; // Stop if the date is beyond tomorrow
-            }
-
-            //check if date is before start date
-            if ($date->lt($start_date)) {
-                continue; // Skip dates before the start date
-            }
-
-
-            //loop through each user
-            foreach ($users as $user) {
-                $isAvailableOnDay = $user->isAvailableOnDay($date);
-                if (!$isAvailableOnDay) {
-                    continue; // Skip if user is not available on this day
-                }
-                //check if user has attendance record for this date
-                $attendance = AttendanceRecord::where([
-                    'user_id' => $user->id,
-                    'attendance_date' => $date->toDateString()
-                ])->first();
-
-                if ($attendance != null) {
-                    continue;
-                }
-
-                $attendance = new AttendanceRecord();
-                $attendance->user_id = $user->id;
-                $attendance->attendance_date = $date->toDateString();
-                $attendance->check_in_time = null; //default check-in time
-                $attendance->check_out_time = null; //default check-out time
-                $attendance->import_record_id = null; //default check-out time
-                $attendance->error_message = null; //default check-out time
-                $attendance->is_late = null; //default check-out time
-                $attendance->status = 'Absent'; //default status
-                $attendance->day = $date->format('l'); //day of the week
-                $attendance->is_imported = 'No'; //default is not imported
-                $attendance->has_error = 'No'; //default is not imported
-                $attendance->is_late = 'No'; //default is not imported
-                $attendance->save();
-                $output[] = $attendance;
-            }
-        }
-
-
-        //delete records beyond today
-        $rec = AttendanceRecord::where('attendance_date', '>', $today->toDateString())
-            ->delete();
-
-        // die("Attendance records generated successfully for the month. Total records: " . count($output));
-        return $output;
+        return app(\App\Services\AttendanceEngine::class)->processRange(now()->startOfMonth(), today());
     }
+
     public static function get_test_mails()
     {
         return [
@@ -243,7 +153,7 @@ class Utils extends Model
                 function ($m) use ($data) {
                     $m->to($data['email'], $data['name'])
                         ->subject($data['subject']);
-                    $m->from(env('MAIL_FROM_ADDRESS'), $data['subject']);
+                    $m->from(config('mail.from.address'), $data['subject']);
                 }
             );
         } catch (\Throwable $th) {

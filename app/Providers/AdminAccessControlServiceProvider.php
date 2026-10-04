@@ -31,20 +31,7 @@ class AdminAccessControlServiceProvider extends ServiceProvider
         // Override Laravel Admin's default middleware to use our role-based system
         $this->overrideAdminMiddleware();
         
-        // Override Laravel Admin menu rendering to filter based on permissions
-        View::composer('admin::partials.sidebar', function ($view) {
-            try {
-                $accessControl = app(AccessControlService::class);
-                
-                if (!$accessControl->isAdministrator()) {
-                    // If not admin, provide empty menu items
-                    $view->with('menu', collect([]));
-                }
-            } catch (\Exception $e) {
-                // If anything fails, don't break the view
-                return;
-            }
-        });
+        // The sidebar is built from App\Services\AccessPolicy (see the sidebar view override).
 
         // Temporarily disable route-level validation to fix login issues
         // We'll rely on middleware-level protection instead

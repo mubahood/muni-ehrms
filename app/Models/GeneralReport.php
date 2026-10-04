@@ -173,7 +173,7 @@ class GeneralReport extends Model
         return $this->is_generated === 'Yes' 
             && $this->status === 'completed'
             && !empty($this->file_path)
-            && file_exists(public_path($this->file_path));
+            && file_exists(\App\Models\GeneralReport::storagePath($this->file_path));
     }
 
     /**
@@ -197,11 +197,11 @@ class GeneralReport extends Model
      */
     public function getFileSizeAttribute(): ?string
     {
-        if (!$this->file_path || !file_exists(public_path($this->file_path))) {
+        if (!$this->file_path || !file_exists(\App\Models\GeneralReport::storagePath($this->file_path))) {
             return null;
         }
 
-        $bytes = filesize(public_path($this->file_path));
+        $bytes = filesize(\App\Models\GeneralReport::storagePath($this->file_path));
         $units = ['B', 'KB', 'MB', 'GB'];
         
         for ($i = 0; $bytes > 1024; $i++) {
@@ -269,8 +269,8 @@ class GeneralReport extends Model
      */
     public function deleteFile(): bool
     {
-        if ($this->file_path && file_exists(public_path($this->file_path))) {
-            return unlink(public_path($this->file_path));
+        if ($this->file_path && file_exists(\App\Models\GeneralReport::storagePath($this->file_path))) {
+            return unlink(\App\Models\GeneralReport::storagePath($this->file_path));
         }
         return false;
     }
@@ -286,5 +286,14 @@ class GeneralReport extends Model
         static::deleting(function ($report) {
             $report->deleteFile();
         });
+    }
+
+    /**
+     * Where a generated report file lives: private storage (storage/app),
+     * never the public folder, so only the signed-in route can serve it.
+     */
+    public static function storagePath(?string $relative): string
+    {
+        return storage_path('app/' . ltrim((string) $relative, '/'));
     }
 }
