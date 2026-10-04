@@ -1,1 +1,4 @@
 .env
+credentials.txt
+*.sql
+!vendor/**/*.sql
